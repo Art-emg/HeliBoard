@@ -67,6 +67,7 @@ public class SettingsValues {
     public final String mVoiceKeyPlacement;
     public final boolean mSonioxListeningSound;
     public final boolean mSonioxListeningVibrate;
+    public final boolean mSonioxStripPunctuation;
     public final boolean mLanguageSwitchKeyToOtherImes;
     public final boolean mLanguageSwitchKeyToOtherSubtypes;
     private final boolean mShowsLanguageSwitchKey;
@@ -205,6 +206,7 @@ public class SettingsValues {
         mVoiceKeyPlacement = prefs.getString(Settings.PREF_VOICE_KEY_PLACEMENT, Defaults.PREF_VOICE_KEY_PLACEMENT);
         mSonioxListeningSound = prefs.getBoolean(Settings.PREF_SONIOX_LISTENING_SOUND, Defaults.PREF_SONIOX_LISTENING_SOUND);
         mSonioxListeningVibrate = prefs.getBoolean(Settings.PREF_SONIOX_LISTENING_VIBRATE, Defaults.PREF_SONIOX_LISTENING_VIBRATE);
+        mSonioxStripPunctuation = prefs.getBoolean(Settings.PREF_SONIOX_STRIP_PUNCTUATION, Defaults.PREF_SONIOX_STRIP_PUNCTUATION);
         String languagePref = prefs.getString(Settings.PREF_LANGUAGE_SWITCH_KEY, Defaults.PREF_LANGUAGE_SWITCH_KEY);
         mLanguageSwitchKeyToOtherImes = languagePref.equals("input_method") || languagePref.equals("both");
         mLanguageSwitchKeyToOtherSubtypes = mIsLocked || languagePref.equals("internal") || languagePref.equals("both");

@@ -129,6 +129,7 @@ public final class Settings implements SharedPreferences.OnSharedPreferenceChang
     public static final String PREF_SONIOX_MODEL = "soniox_model";
     public static final String PREF_SONIOX_LISTENING_SOUND = "soniox_listening_sound";
     public static final String PREF_SONIOX_LISTENING_VIBRATE = "soniox_listening_vibrate";
+    public static final String PREF_SONIOX_STRIP_PUNCTUATION = "soniox_strip_punctuation";
     public static final String VOICE_INPUT_PROVIDER_SYSTEM = "system";
     public static final String VOICE_INPUT_PROVIDER_SONIOX = "soniox";
     public static final String PREF_VOICE_KEY_PLACEMENT = "voice_key_placement";
@@ -361,6 +362,11 @@ public final class Settings implements SharedPreferences.OnSharedPreferenceChang
     public void toggleAlwaysIncognitoMode() {
         final boolean oldValue = mPrefs.getBoolean(Settings.PREF_ALWAYS_INCOGNITO_MODE, Defaults.PREF_ALWAYS_INCOGNITO_MODE);
         mPrefs.edit().putBoolean(Settings.PREF_ALWAYS_INCOGNITO_MODE, !oldValue).apply();
+    }
+
+    public void toggleSonioxStripPunctuation() {
+        final boolean oldValue = mPrefs.getBoolean(PREF_SONIOX_STRIP_PUNCTUATION, Defaults.PREF_SONIOX_STRIP_PUNCTUATION);
+        mPrefs.edit().putBoolean(PREF_SONIOX_STRIP_PUNCTUATION, !oldValue).apply();
     }
 
     public static ToolbarMode readToolbarMode(final SharedPreferences prefs) {

@@ -81,6 +81,7 @@ import helium314.keyboard.latin.utils.KtxKt;
 import helium314.keyboard.latin.utils.LeakGuardHandlerWrapper;
 import helium314.keyboard.latin.utils.VoiceInputUtils;
 import helium314.keyboard.latin.voice.SonioxVoiceInputManager;
+import helium314.keyboard.latin.voice.SttTextUtils;
 import helium314.keyboard.latin.voice.VoiceListeningState;
 import helium314.keyboard.latin.utils.Log;
 import helium314.keyboard.latin.utils.RecapitalizeMode;
@@ -1444,7 +1445,7 @@ public class LatinIME extends InputMethodService implements
             mSonioxVoiceInput = new SonioxVoiceInputManager(
                     this,
                     token -> {
-                        mHandler.post(() -> onTextInput(token));
+                        mHandler.post(() -> onSonioxTextInput(token));
                         return kotlin.Unit.INSTANCE;
                     },
                     error -> {
@@ -1469,6 +1470,14 @@ public class LatinIME extends InputMethodService implements
             );
         }
         return mSonioxVoiceInput;
+    }
+
+    private void onSonioxTextInput(final String token) {
+        String text = token;
+        if (mSettings.getCurrent().mSonioxStripPunctuation) {
+            text = SttTextUtils.stripSttPunctuation(text);
+        }
+        onTextInput(text);
     }
 
     private void onVoiceListeningReady() {

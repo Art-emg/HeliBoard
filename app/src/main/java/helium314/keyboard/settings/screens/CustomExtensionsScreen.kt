@@ -42,6 +42,7 @@ fun CustomExtensionsScreen(onClickBack: () -> Unit) {
             Settings.PREF_ALLOW_VOICE_ON_PASSWORD,
             Settings.PREF_SONIOX_LISTENING_SOUND,
             Settings.PREF_SONIOX_LISTENING_VIBRATE,
+            Settings.PREF_SONIOX_STRIP_PUNCTUATION,
         ),
     )
 }
@@ -102,6 +103,11 @@ fun createCustomExtensionsSettings(context: Context) = listOf(
         R.string.voice_listening_start_vibrate, R.string.voice_listening_start_vibrate_summary)
     {
         SwitchPreference(it, Defaults.PREF_SONIOX_LISTENING_VIBRATE)
+    },
+    Setting(context, Settings.PREF_SONIOX_STRIP_PUNCTUATION,
+        R.string.soniox_strip_punctuation, R.string.soniox_strip_punctuation_summary)
+    {
+        SwitchPreference(it, Defaults.PREF_SONIOX_STRIP_PUNCTUATION)
     },
 )
 

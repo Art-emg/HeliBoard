@@ -115,6 +115,7 @@ object Defaults {
     const val PREF_VOICE_KEY_PLACEMENT = Settings.VOICE_KEY_PLACEMENT_DEDICATED
     const val PREF_SONIOX_LISTENING_SOUND = true
     const val PREF_SONIOX_LISTENING_VIBRATE = true
+    const val PREF_SONIOX_STRIP_PUNCTUATION = false
     const val PREF_BIGRAM_PREDICTIONS = true
     const val PREF_SUGGEST_PUNCTUATION = false
     const val PREF_SUGGEST_CLIPBOARD_CONTENT = true

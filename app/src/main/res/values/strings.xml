@@ -318,6 +318,12 @@
     <string name="voice_listening_start_vibrate">Vibrate when listening starts</string>
     <!-- Description for voice_listening_start_vibrate -->
     <string name="voice_listening_start_vibrate_summary">Vibrate when the microphone is ready for dictation</string>
+    <!-- Title for stripping punctuation from speech-to-text -->
+    <string name="soniox_strip_punctuation">Remove STT punctuation</string>
+    <!-- Description for soniox_strip_punctuation -->
+    <string name="soniox_strip_punctuation_summary">Strip punctuation from voice dictation; lowercase words that would start after removed punctuation</string>
+    <!-- Toolbar key: toggle STT punctuation removal -->
+    <string name="strip_punctuation" tools:keep="@string/strip_punctuation">No STT punctuation</string>
     <!-- Content description for "popup keys" suggestions view -->
     <string name="more_keys_strip_description">More keys</string>
     <!-- Title for input language & layout selection screen -->
