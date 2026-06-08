@@ -1,32 +1,36 @@
 # HeliBoard (Soniox voice input)
 
-Кастомная версия HeliBoard с интеграцией **Soniox** для голосового ввода (speech-to-text).
+A custom HeliBoard build with **Soniox** integration for voice dictation (speech-to-text).
 
-## Что изменено
+## What changed
 
-Основная и единственная добавленная функция — **диктовка через Soniox Realtime STT**.
+The main addition is **real-time dictation via Soniox Realtime STT**.
 
-- Голосовой ввод работает через WebSocket API Soniox (модель по умолчанию: `stt-rt-preview`)
-- На клавиатуре есть **отдельная кнопка микрофона** слева от Enter — не нужно искать микрофон в тулбаре
-- При записи кнопка показывает состояние: синяя пульсация при подключении, зелёная — при прослушивании (реагирует на громкость голоса)
-- Можно включить звук и вибрацию в момент, когда микрофон действительно готов принимать речь
+- Voice input uses the Soniox WebSocket API (default model: `stt-rt-preview`)
+- A **dedicated microphone key** sits to the left of Enter — no need to open the toolbar
+- While recording, the key shows state: blue pulse while connecting, green while listening (brightness follows your voice level)
+- Optional sound and vibration when the microphone is actually ready for speech
 
-## Настройка
+## Setup
 
-**Настройки → Voice & privacy**
+**Settings → Voice & privacy**
 
-1. **Voice input provider** — выберите `Soniox API`
-2. **Soniox API key** — ключ из [console.soniox.com](https://console.soniox.com)
-3. **Voice key placement** — `Dedicated key (left of Enter)` для отдельной кнопки микрофона
+1. **Voice input provider** — select `Soniox API`
+2. **Soniox API key** — key from [console.soniox.com](https://console.soniox.com)
+3. **Voice key placement** — `Dedicated key (left of Enter)` for the standalone mic button
 
-## Сборка
+## Build
 
 ```powershell
 .\gradlew assembleDebugNoMinify
 ```
 
-APK: `app/build/outputs/apk/debugNoMinify/HeliBoard_3.9-debugNoMinify.apk`
+APK output: `app/build/outputs/apk/debugNoMinify/HeliBoard_3.9-debugNoMinify.apk`
 
-## Лицензия
+## Download
 
-Проект основан на HeliBoard (GPL-3.0). См. [LICENSE](/LICENSE).
+Pre-built APK: [latest release](https://github.com/Art-emg/HeliBoard/releases/latest)
+
+## License
+
+Based on HeliBoard (GPL-3.0). See [LICENSE](/LICENSE).
