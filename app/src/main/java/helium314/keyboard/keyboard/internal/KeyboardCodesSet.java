@@ -58,6 +58,8 @@ public final class KeyboardCodesSet {
         "key_switch_onehanded",
         "key_emoji_search",
         "toggle_floating",
+        "key_soniox_keep_punct",
+        "key_soniox_strip_punct",
     };
 
     private static final int[] DEFAULT = {
@@ -86,6 +88,8 @@ public final class KeyboardCodesSet {
         KeyCode.SWITCH_ONE_HANDED_MODE,
         KeyCode.EMOJI_SEARCH,
         KeyCode.TOGGLE_FLOATING_WINDOW,
+        KeyCode.SET_SONIOX_KEEP_PUNCTUATION,
+        KeyCode.SET_SONIOX_STRIP_PUNCTUATION,
     };
 
     static {

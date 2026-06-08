@@ -324,6 +324,10 @@
     <string name="soniox_strip_punctuation_summary">Strip punctuation from voice dictation; lowercase words that would start after removed punctuation</string>
     <!-- Toolbar key: toggle STT punctuation removal -->
     <string name="strip_punctuation" tools:keep="@string/strip_punctuation">No STT punctuation</string>
+    <!-- Long-press mic popup: keep punctuation in Soniox dictation -->
+    <string name="soniox_keep_punctuation">Keep punctuation</string>
+    <!-- Long-press mic popup: strip punctuation from Soniox dictation -->
+    <string name="soniox_no_punctuation">No punctuation</string>
     <!-- Content description for "popup keys" suggestions view -->
     <string name="more_keys_strip_description">More keys</string>
     <!-- Title for input language & layout selection screen -->

@@ -35,6 +35,7 @@ public class SuggestedWords {
     public static final int INPUT_STYLE_RECORRECTION = 5;
     public static final int INPUT_STYLE_PREDICTION = 6;
     public static final int INPUT_STYLE_BEGINNING_OF_SENTENCE_PREDICTION = 7;
+    public static final int INPUT_STYLE_VOICE_PARTIAL = 8;
 
     // The maximum number of suggestions available.
     public static final int MAX_SUGGESTIONS = 18;
@@ -99,6 +100,9 @@ public class SuggestedWords {
      * @return the count of suggested word to show as suggestions to UI.
      */
     public int getWordCountToShow() {
+        if (mInputStyle == INPUT_STYLE_VOICE_PARTIAL) {
+            return size();
+        }
         if (isPrediction()) {
             return size();
         }
@@ -173,6 +177,22 @@ public class SuggestedWords {
      */
     public boolean isPunctuationSuggestions() {
         return false;
+    }
+
+    public boolean isVoicePartial() {
+        return mInputStyle == INPUT_STYLE_VOICE_PARTIAL;
+    }
+
+    @NonNull
+    public static SuggestedWords newVoicePartial(@NonNull final String partialText) {
+        final ArrayList<SuggestedWordInfo> list = new ArrayList<>(1);
+        list.add(new SuggestedWordInfo(
+                partialText, "", 0, SuggestedWordInfo.KIND_VOICE_PARTIAL,
+                Dictionary.DICTIONARY_USER_TYPED, SuggestedWordInfo.NOT_AN_INDEX,
+                SuggestedWordInfo.NOT_A_CONFIDENCE));
+        return new SuggestedWords(
+                list, null, null, false, false, false,
+                INPUT_STYLE_VOICE_PARTIAL, NOT_A_SEQUENCE_NUMBER);
     }
 
     @Override
@@ -255,6 +275,7 @@ public class SuggestedWords {
         // in java for re-correction)
         public static final int KIND_RESUMED = 9;
         public static final int KIND_OOV_CORRECTION = 10; // Most probable string correction
+        public static final int KIND_VOICE_PARTIAL = 11; // Live Soniox dictation preview
 
         public static final int KIND_FLAG_POSSIBLY_OFFENSIVE = 0x80000000;
         public static final int KIND_FLAG_EXACT_MATCH = 0x40000000;

@@ -105,6 +105,16 @@ class KeyboardActionListenerImpl(private val latinIME: LatinIME, private val inp
                 keyboardSwitcher.mainKeyboardView?.refreshVoiceKeyVisuals()
                 return
             }
+            KeyCode.SET_SONIOX_KEEP_PUNCTUATION -> {
+                settings.setSonioxStripPunctuation(false)
+                keyboardSwitcher.mainKeyboardView?.refreshVoiceKeyVisuals()
+                return
+            }
+            KeyCode.SET_SONIOX_STRIP_PUNCTUATION -> {
+                settings.setSonioxStripPunctuation(true)
+                keyboardSwitcher.mainKeyboardView?.refreshVoiceKeyVisuals()
+                return
+            }
         }
         if (Settings.getValues().mIsLocked && KeyCode.isIsBlockedWhenLocked(primaryCode))
             return

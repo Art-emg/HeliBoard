@@ -369,6 +369,10 @@ public final class Settings implements SharedPreferences.OnSharedPreferenceChang
         mPrefs.edit().putBoolean(PREF_SONIOX_STRIP_PUNCTUATION, !oldValue).apply();
     }
 
+    public void setSonioxStripPunctuation(final boolean strip) {
+        mPrefs.edit().putBoolean(PREF_SONIOX_STRIP_PUNCTUATION, strip).apply();
+    }
+
     public static ToolbarMode readToolbarMode(final SharedPreferences prefs) {
         return ToolbarMode.valueOf(prefs.getString(PREF_TOOLBAR_MODE, Defaults.PREF_TOOLBAR_MODE));
     }

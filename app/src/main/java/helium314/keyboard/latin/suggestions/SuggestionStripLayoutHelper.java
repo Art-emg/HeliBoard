@@ -288,7 +288,9 @@ final class SuggestionStripLayoutHelper {
         final boolean isTypedWord = suggestedWords.getInfo(indexInSuggestedWords).isKindOf(SuggestedWordInfo.KIND_TYPED);
 
         final int color;
-        if (indexInSuggestedWords == SuggestedWords.INDEX_OF_AUTO_CORRECTION && suggestedWords.mWillAutoCorrect) {
+        if (suggestedWords.getInfo(indexInSuggestedWords).isKindOf(SuggestedWordInfo.KIND_VOICE_PARTIAL)) {
+            return applyAlpha(mColorSuggested, mAlphaObsoleted);
+        } else if (indexInSuggestedWords == SuggestedWords.INDEX_OF_AUTO_CORRECTION && suggestedWords.mWillAutoCorrect) {
             color = mColorAutoCorrect;
         } else if (isTypedWord && suggestedWords.mTypedWordValid) {
             color = mColorValidTypedWord;
@@ -331,6 +333,9 @@ final class SuggestionStripLayoutHelper {
         if (suggestedWords.isPunctuationSuggestions()) {
             return layoutPunctuationsAndReturnStartIndexOfMoreSuggestions(
                     (PunctuationSuggestions)suggestedWords, stripView);
+        }
+        if (suggestedWords.isVoicePartial()) {
+            return layoutVoicePartialAndReturnStartIndexOfMoreSuggestions(suggestedWords, stripView);
         }
 
         final int wordCountToShow = suggestedWords.getWordCountToShow();
@@ -462,6 +467,10 @@ final class SuggestionStripLayoutHelper {
             final TextView wordView = mWordViews.get(positionInStrip);
             wordView.setText(null);
             wordView.setTag(null);
+            wordView.setClickable(true);
+            wordView.setLongClickable(true);
+            wordView.setGravity(Gravity.CENTER);
+            wordView.setEllipsize(null);
             // Make this inactive for touches in {@link #layoutWord(int,int)}.
             if (SuggestionStripView.DEBUG_SUGGESTIONS) {
                 mDebugInfoViews.get(positionInStrip).setText(null);
@@ -518,6 +527,28 @@ final class SuggestionStripLayoutHelper {
         return countInStrip;
     }
 
+    private int layoutVoicePartialAndReturnStartIndexOfMoreSuggestions(
+            final SuggestedWords suggestedWords, final ViewGroup stripView) {
+        final TextView centerWordView = mWordViews.get(mCenterPositionInStrip);
+        final String partial = suggestedWords.getWord(0);
+        final int maxWidth = Math.max(stripView.getWidth() - mPadding * 2, 0);
+        centerWordView.setTag(null);
+        centerWordView.setClickable(false);
+        centerWordView.setLongClickable(false);
+        centerWordView.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
+        centerWordView.setEllipsize(TextUtils.TruncateAt.START);
+        centerWordView.setTextScaleX(1.0f);
+        centerWordView.setCompoundDrawables(null, null, null, null);
+        centerWordView.setText(getEllipsizedVoicePartialText(partial, maxWidth, centerWordView.getPaint()));
+        centerWordView.setContentDescription(partial);
+        centerWordView.setTextColor(getSuggestionTextColor(suggestedWords, 0));
+        KeyboardTypeface.applyToTextView(centerWordView);
+        stripView.addView(centerWordView);
+        setLayoutWeight(centerWordView, 1.0f, ViewGroup.LayoutParams.MATCH_PARENT);
+        mMoreSuggestionsAvailable = false;
+        return 1;
+    }
+
     static void setLayoutWeight(final View v, final float weight, final int height) {
         final ViewGroup.LayoutParams lp = v.getLayoutParams();
         if (lp instanceof final LinearLayout.LayoutParams llp) {
@@ -534,6 +565,27 @@ final class SuggestionStripLayoutHelper {
             return 1.0f;
         }
         return maxWidth / (float) width;
+    }
+
+    @Nullable
+    private static CharSequence getEllipsizedVoicePartialText(
+            @Nullable final CharSequence text, final int maxWidth, @NonNull final TextPaint paint) {
+        if (text == null) {
+            return null;
+        }
+        if (maxWidth <= 0) {
+            return text;
+        }
+        paint.setTextScaleX(1.0f);
+        if (getTextWidth(text, paint) <= maxWidth) {
+            return text;
+        }
+        paint.setTextScaleX(MIN_TEXT_XSCALE);
+        if (getTextWidth(text, paint) <= maxWidth) {
+            return text;
+        }
+        // Keep the latest dictated words visible on the trailing (right) edge.
+        return TextUtils.ellipsize(text, paint, maxWidth, TextUtils.TruncateAt.START);
     }
 
     @Nullable

@@ -51,6 +51,7 @@ enum class VoiceListeningState {
 class SonioxVoiceInputManager(
     private val context: Context,
     private val onFinalText: (String) -> Unit,
+    private val onPartialText: (String) -> Unit = {},
     private val onError: (String) -> Unit,
     private val onStateChanged: (VoiceListeningState) -> Unit,
     private val onAudioLevel: (Float) -> Unit = {},
@@ -242,16 +243,19 @@ class SonioxVoiceInputManager(
         }
         // Commit every newly finalized token. Soniox sends each final token exactly once,
         // so concatenating finals across messages reconstructs the full transcript.
-        val sb = StringBuilder()
+        val finalSb = StringBuilder()
+        val partialSb = StringBuilder()
         for (token in response.tokens) {
-            if (!token.isFinal) continue
             val cleaned = cleanToken(token.text)
-            if (cleaned.isNotEmpty()) sb.append(cleaned)
+            if (cleaned.isEmpty()) continue
+            if (token.isFinal) finalSb.append(cleaned)
+            else partialSb.append(cleaned)
         }
-        if (sb.isNotEmpty()) {
-            val out = sb.toString()
+        if (finalSb.isNotEmpty()) {
+            val out = finalSb.toString()
             scope.launch(Dispatchers.Main) { onFinalText(out) }
         }
+        scope.launch(Dispatchers.Main) { onPartialText(partialSb.toString()) }
         if (response.finished) {
             scope.launch(Dispatchers.Main) { finishCleanup() }
         }
@@ -286,6 +290,7 @@ class SonioxVoiceInputManager(
         try { webSocket?.close(1000, null) } catch (_: Exception) { }
         webSocket = null
         if (uiState != VoiceListeningState.OFF) setState(VoiceListeningState.OFF)
+        scope.launch(Dispatchers.Main) { onPartialText("") }
     }
 
     private fun forceReset() {

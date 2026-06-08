@@ -4,6 +4,7 @@ package helium314.keyboard.latin.voice
 import helium314.keyboard.keyboard.Key
 import helium314.keyboard.keyboard.internal.KeyboardParams
 import helium314.keyboard.keyboard.internal.keyboard_parser.floris.KeyCode
+import helium314.keyboard.keyboard.internal.keyboard_parser.floris.SimplePopups
 import helium314.keyboard.latin.settings.Settings
 import helium314.keyboard.latin.settings.SettingsValues
 import helium314.keyboard.latin.utils.ToolbarKey
@@ -14,6 +15,13 @@ object VoiceKeyboardLayout {
     private const val DEDICATED_VOICE_KEY_WIDTH = 0.10f
     /** Extra shrink on the space bar so the mic key does not crowd Enter. */
     private const val SPACE_EXTRA_SHRINK = 0.015f
+
+    /** Long-press popup on the dedicated mic key: keep vs strip STT punctuation. */
+    private val voicePunctPopupKeys = listOf(
+        "!fixedColumnOrder!2",
+        "!icon/soniox_keep_punct|!code/key_soniox_keep_punct",
+        "!icon/soniox_strip_punct|!code/key_soniox_strip_punct",
+    )
 
     fun apply(keysInRows: ArrayList<ArrayList<Key.KeyParams>>, params: KeyboardParams) {
         val settings = Settings.getValues()
@@ -41,7 +49,7 @@ object VoiceKeyboardLayout {
                 DEDICATED_VOICE_KEY_WIDTH,
                 Key.LABEL_FLAGS_FOLLOW_FUNCTIONAL_TEXT_COLOR,
                 Key.BACKGROUND_TYPE_FUNCTIONAL,
-                null,
+                SimplePopups(voicePunctPopupKeys),
             ),
         )
         // Voice key is inserted after row width balancing; shrink space so the row fits.

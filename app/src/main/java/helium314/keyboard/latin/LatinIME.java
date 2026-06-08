@@ -191,6 +191,10 @@ public class LatinIME extends InputMethodService implements
 
     private SonioxVoiceInputManager mSonioxVoiceInput;
 
+    /** Non-final Soniox dictation preview shown in the suggestion strip; null when hidden. */
+    @Nullable
+    private String mSonioxPartialPreview;
+
     private final ClipboardHistoryManager mClipboardHistoryManager = new ClipboardHistoryManager(this);
 
     public static final class UIHandler extends LeakGuardHandlerWrapper<LatinIME> {
@@ -1448,6 +1452,10 @@ public class LatinIME extends InputMethodService implements
                         mHandler.post(() -> onSonioxTextInput(token));
                         return kotlin.Unit.INSTANCE;
                     },
+                    partial -> {
+                        mHandler.post(() -> showSonioxPartialPreview(partial));
+                        return kotlin.Unit.INSTANCE;
+                    },
                     error -> {
                         mHandler.post(() -> {
                             Toast.makeText(this, error, Toast.LENGTH_LONG).show();
@@ -1456,7 +1464,12 @@ public class LatinIME extends InputMethodService implements
                         return kotlin.Unit.INSTANCE;
                     },
                     state -> {
-                        mHandler.post(() -> mKeyboardSwitcher.setVoiceListeningState(state));
+                        mHandler.post(() -> {
+                            mKeyboardSwitcher.setVoiceListeningState(state);
+                            if (state == VoiceListeningState.OFF) {
+                                mSonioxPartialPreview = null;
+                            }
+                        });
                         return kotlin.Unit.INSTANCE;
                     },
                     level -> {
@@ -1473,6 +1486,7 @@ public class LatinIME extends InputMethodService implements
     }
 
     private void onSonioxTextInput(final String token) {
+        showSonioxPartialPreview("");
         String text = token;
         if (mSettings.getCurrent().mSonioxStripPunctuation) {
             text = SttTextUtils.stripSttPunctuation(text);
@@ -1483,6 +1497,33 @@ public class LatinIME extends InputMethodService implements
             text = SttTextUtils.ensureLeadingSpaceForDictation(before, text);
         }
         onTextInput(text);
+    }
+
+    private void showSonioxPartialPreview(final String partial) {
+        if (partial == null || partial.isEmpty()) {
+            mSonioxPartialPreview = null;
+            if (!hasSuggestionStripView() || !onEvaluateInputViewShown()) {
+                return;
+            }
+            if (isVoiceRecordingActive()) {
+                mSuggestionStripView.setSuggestions(SuggestedWords.getEmptyInstance(),
+                        mRichImm.getCurrentSubtype().isRtlSubtype());
+                mSuggestionStripView.setToolbarVisibility(false);
+            } else {
+                setNeutralSuggestionStrip();
+            }
+            return;
+        }
+        String text = partial;
+        if (mSettings.getCurrent().mSonioxStripPunctuation) {
+            text = SttTextUtils.stripSttPunctuation(text);
+            if (text.isEmpty()) {
+                showSonioxPartialPreview("");
+                return;
+            }
+        }
+        mSonioxPartialPreview = text;
+        setSuggestedWords(SuggestedWords.newVoicePartial(text));
     }
 
     private void onVoiceListeningReady() {
@@ -1564,6 +1605,13 @@ public class LatinIME extends InputMethodService implements
             return;
         }
 
+        if (suggestedWords.isVoicePartial()) {
+            mSuggestionStripView.setSuggestions(suggestedWords,
+                    mRichImm.getCurrentSubtype().isRtlSubtype());
+            mSuggestionStripView.setToolbarVisibility(false);
+            return;
+        }
+
         final boolean isEmptyApplicationSpecifiedCompletions =
                 currentSettingsValues.mInputAttributes.mApplicationSpecifiedCompletionOn
                         && suggestedWords.isEmpty();
@@ -1586,7 +1634,19 @@ public class LatinIME extends InputMethodService implements
 
     @Override
     public void setSuggestions(final SuggestedWords suggestedWords) {
+        if (isVoiceRecordingActive() && mSonioxPartialPreview != null && !mSonioxPartialPreview.isEmpty()
+                && suggestedWords.mInputStyle != SuggestedWords.INPUT_STYLE_VOICE_PARTIAL) {
+            return;
+        }
         if (suggestedWords.isEmpty()) {
+            if (isVoiceRecordingActive()) {
+                if (hasSuggestionStripView()) {
+                    mSuggestionStripView.setSuggestions(SuggestedWords.getEmptyInstance(),
+                            mRichImm.getCurrentSubtype().isRtlSubtype());
+                    mSuggestionStripView.setToolbarVisibility(false);
+                }
+                return;
+            }
             // avoids showing clipboard suggestion when starting gesture typing
             // should be fine, as there will be another suggestion in a few ms
             // (but not a great style to avoid this visual glitch, maybe revert this commit and replace with sth better)

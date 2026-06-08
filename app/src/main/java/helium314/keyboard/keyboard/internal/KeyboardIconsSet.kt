@@ -81,6 +81,8 @@ class KeyboardIconsSet private constructor() {
         const val NAME_TOGGLE_FLOATING = "toggle_floating"
         const val NAME_TOOLBAR_KEY = "toolbar_key"
         const val NAME_BIN = "bin"
+        const val NAME_SONIOX_KEEP_PUNCT = "soniox_keep_punct"
+        const val NAME_SONIOX_STRIP_PUNCT = "soniox_strip_punct"
 
         // names used in the past, and we can't just delete them because they might still be in use in some layouts
         // (also some of them are in use for internal layouts, but there we could just remove them...)
@@ -122,7 +124,9 @@ class KeyboardIconsSet private constructor() {
             NAME_RESIZE_ONEHANDED_KEY to        R.drawable.ic_arrow_horizontal,
             NAME_TOOLBAR_KEY to                 R.drawable.ic_arrow_right,
             NAME_BIN to                         R.drawable.ic_bin,
-            NAME_TOGGLE_FLOATING to             R.drawable.ic_drag_indicator
+            NAME_TOGGLE_FLOATING to             R.drawable.ic_drag_indicator,
+            NAME_SONIOX_KEEP_PUNCT to           R.drawable.ic_punct_allowed,
+            NAME_SONIOX_STRIP_PUNCT to          R.drawable.ic_no_punct_strike,
         ).apply {
             ToolbarKey.entries.forEach {
                 put(it.name.lowercase(Locale.US), when (it) {
@@ -186,7 +190,9 @@ class KeyboardIconsSet private constructor() {
             NAME_RESIZE_ONEHANDED_KEY to        R.drawable.ic_arrow_horizontal,
             NAME_TOOLBAR_KEY to                 R.drawable.ic_arrow_right,
             NAME_BIN to                         R.drawable.ic_bin,
-            NAME_TOGGLE_FLOATING to             R.drawable.ic_drag_indicator
+            NAME_TOGGLE_FLOATING to             R.drawable.ic_drag_indicator,
+            NAME_SONIOX_KEEP_PUNCT to           R.drawable.ic_punct_allowed,
+            NAME_SONIOX_STRIP_PUNCT to          R.drawable.ic_no_punct_strike,
         ).apply {
             ToolbarKey.entries.forEach {
                 put(it.name.lowercase(Locale.US), when (it) {
@@ -250,7 +256,9 @@ class KeyboardIconsSet private constructor() {
             NAME_RESIZE_ONEHANDED_KEY to        R.drawable.ic_arrow_horizontal_rounded,
             NAME_TOOLBAR_KEY to                 R.drawable.ic_arrow_right_rounded,
             NAME_BIN to                         R.drawable.ic_bin_rounded,
-            NAME_TOGGLE_FLOATING to             R.drawable.ic_drag_indicator
+            NAME_TOGGLE_FLOATING to             R.drawable.ic_drag_indicator,
+            NAME_SONIOX_KEEP_PUNCT to           R.drawable.ic_punct_allowed,
+            NAME_SONIOX_STRIP_PUNCT to          R.drawable.ic_no_punct_strike,
         ).apply {
             ToolbarKey.entries.forEach {
                 put(it.name.lowercase(Locale.US), when (it) {
