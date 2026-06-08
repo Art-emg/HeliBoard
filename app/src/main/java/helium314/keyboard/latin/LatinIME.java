@@ -26,6 +26,7 @@ import android.util.PrintWriterPrinter;
 import android.util.Printer;
 import android.view.KeyEvent;
 import android.view.View;
+import android.widget.Toast;
 import android.view.Window;
 import android.view.inputmethod.CompletionInfo;
 import android.view.inputmethod.EditorInfo;
@@ -78,6 +79,9 @@ import helium314.keyboard.latin.utils.InputMethodPickerKt;
 import helium314.keyboard.latin.utils.JniUtils;
 import helium314.keyboard.latin.utils.KtxKt;
 import helium314.keyboard.latin.utils.LeakGuardHandlerWrapper;
+import helium314.keyboard.latin.utils.VoiceInputUtils;
+import helium314.keyboard.latin.voice.SonioxVoiceInputManager;
+import helium314.keyboard.latin.voice.VoiceListeningState;
 import helium314.keyboard.latin.utils.Log;
 import helium314.keyboard.latin.utils.RecapitalizeMode;
 import helium314.keyboard.latin.utils.StatsUtils;
@@ -183,6 +187,8 @@ public class LatinIME extends InputMethodService implements
     private final boolean mIsHardwareAcceleratedDrawingEnabled;
 
     private GestureConsumer mGestureConsumer = GestureConsumer.NULL_GESTURE_CONSUMER;
+
+    private SonioxVoiceInputManager mSonioxVoiceInput;
 
     private final ClipboardHistoryManager mClipboardHistoryManager = new ClipboardHistoryManager(this);
 
@@ -700,6 +706,10 @@ public class LatinIME extends InputMethodService implements
         unregisterReceiver(mDictionaryDumpBroadcastReceiver);
         unregisterReceiver(mRestartAfterDeviceUnlockReceiver);
         mStatsUtilsManager.onDestroy(this /* context */);
+        if (mSonioxVoiceInput != null) {
+            mSonioxVoiceInput.release();
+            mSonioxVoiceInput = null;
+        }
         super.onDestroy();
         mHandler.removeCallbacksAndMessages(null);
         deallocateMemory();
@@ -1032,6 +1042,9 @@ public class LatinIME extends InputMethodService implements
     void onFinishInputViewInternal(final boolean finishingInput) {
         super.onFinishInputView(finishingInput);
         Log.i(TAG, "onFinishInputView");
+        if (mSonioxVoiceInput != null && mSonioxVoiceInput.isRecordingActive()) {
+            mSonioxVoiceInput.stop();
+        }
         cleanupInternalStateForFinishInput();
     }
 
@@ -1408,7 +1421,11 @@ public class LatinIME extends InputMethodService implements
     // completely replace #onCodeInput.
     public void onEvent(@NonNull final Event event) {
         if (KeyCode.VOICE_INPUT == event.getKeyCode()) {
-            mRichImm.switchToShortcutIme(this);
+            if (VoiceInputUtils.isSonioxConfigured(this)) {
+                getSonioxVoiceInput().toggle();
+            } else {
+                mRichImm.switchToShortcutIme(this);
+            }
         }
         final InputTransaction completeInputTransaction =
                 mInputLogic.onCodeInput(mSettings.getCurrent(), event,
@@ -1416,6 +1433,30 @@ public class LatinIME extends InputMethodService implements
                         mKeyboardSwitcher.getCurrentKeyboardScript(), mHandler);
         updateStateAfterInputTransaction(completeInputTransaction);
         mKeyboardSwitcher.onEvent(event, getCurrentAutoCapsState(), getCurrentRecapitalizeState());
+    }
+
+    private SonioxVoiceInputManager getSonioxVoiceInput() {
+        if (mSonioxVoiceInput == null) {
+            mSonioxVoiceInput = new SonioxVoiceInputManager(
+                    this,
+                    token -> {
+                        mHandler.post(() -> onTextInput(token));
+                        return kotlin.Unit.INSTANCE;
+                    },
+                    error -> {
+                        mHandler.post(() -> {
+                            Toast.makeText(this, error, Toast.LENGTH_LONG).show();
+                            mKeyboardSwitcher.setVoiceListeningState(VoiceListeningState.OFF);
+                        });
+                        return kotlin.Unit.INSTANCE;
+                    },
+                    state -> {
+                        mHandler.post(() -> mKeyboardSwitcher.setVoiceListeningState(state));
+                        return kotlin.Unit.INSTANCE;
+                    }
+            );
+        }
+        return mSonioxVoiceInput;
     }
 
     public void onTextInput(final String rawText) {

@@ -108,6 +108,10 @@ object Defaults {
     const val PREF_AUTOSPACE_BEFORE_GESTURE_TYPING = true
     const val PREF_SHIFT_REMOVES_AUTOSPACE = false
     const val PREF_ALWAYS_INCOGNITO_MODE = false
+    const val PREF_ALLOW_VOICE_ON_PASSWORD = false
+    const val PREF_VOICE_INPUT_PROVIDER = Settings.VOICE_INPUT_PROVIDER_SYSTEM
+    const val PREF_SONIOX_API_KEY = ""
+    const val PREF_SONIOX_MODEL = "stt-rt-preview"
     const val PREF_BIGRAM_PREDICTIONS = true
     const val PREF_SUGGEST_PUNCTUATION = false
     const val PREF_SUGGEST_CLIPBOARD_CONTENT = true

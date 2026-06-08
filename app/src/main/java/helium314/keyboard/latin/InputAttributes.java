@@ -137,6 +137,37 @@ public final class InputAttributes {
             mNoLearning = false;
     }
 
+    /** Whether voice input would be allowed if a shortcut IME (or Soniox) were available. */
+    public boolean isVoiceInputAllowedWithoutShortcutIme(final boolean allowVoiceOnPassword) {
+        if (!RichInputMethodManager.isInitialized()) {
+            return false;
+        }
+        final int inputClass = mInputType & InputType.TYPE_MASK_CLASS;
+        if (inputClass != InputType.TYPE_CLASS_TEXT) {
+            return false;
+        }
+        final int variation = mInputType & InputType.TYPE_MASK_VARIATION;
+        if (mIsPasswordField && !allowVoiceOnPassword) {
+            return false;
+        }
+        return !InputTypeUtils.isEmailVariation(variation)
+                && !hasNoMicrophoneKeyOption();
+    }
+
+    /** Checks password-field voice eligibility (ignores shortcut IME availability). */
+    public boolean isVoiceInputAllowedOnPasswordField() {
+        if (!RichInputMethodManager.isInitialized()) {
+            return false;
+        }
+        final int inputClass = mInputType & InputType.TYPE_MASK_CLASS;
+        if (inputClass != InputType.TYPE_CLASS_TEXT) {
+            return false;
+        }
+        final int variation = mInputType & InputType.TYPE_MASK_VARIATION;
+        return !InputTypeUtils.isEmailVariation(variation)
+                && !hasNoMicrophoneKeyOption();
+    }
+
     public boolean isTypeNull() {
         return InputType.TYPE_NULL == mInputType;
     }

@@ -38,6 +38,7 @@ fun MainSettingsScreen(
     onClickGestureTyping: () -> Unit,
     onClickDataGathering: () -> Unit,
     onClickAdvanced: () -> Unit,
+    onClickCustomExtensions: () -> Unit,
     onClickAppearance: () -> Unit,
     onClickLanguage: () -> Unit,
     onClickLayouts: () -> Unit,
@@ -94,6 +95,11 @@ fun MainSettingsScreen(
                     icon = R.drawable.ic_settings_correction
                 ) { NextScreenIcon() }
                 Preference(
+                    name = stringResource(R.string.settings_screen_custom_extensions),
+                    onClick = onClickCustomExtensions,
+                    icon = R.drawable.sym_keyboard_voice_holo
+                ) { NextScreenIcon() }
+                Preference(
                     name = stringResource(R.string.settings_screen_secondary_layouts),
                     onClick = onClickLayouts,
                     icon = R.drawable.ic_ime_switcher
@@ -124,7 +130,7 @@ private fun PreviewScreen() {
     initPreview(LocalContext.current)
     Theme(previewDark) {
         Surface {
-            MainSettingsScreen({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})
+            MainSettingsScreen({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})
         }
     }
 }

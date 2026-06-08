@@ -36,6 +36,7 @@ import helium314.keyboard.latin.utils.ScriptUtils;
 import helium314.keyboard.latin.utils.SubtypeSettings;
 import helium314.keyboard.latin.utils.SubtypeUtilsKt;
 import helium314.keyboard.latin.utils.ToolbarMode;
+import helium314.keyboard.latin.utils.VoiceInputUtils;
 
 import java.util.List;
 import java.util.Locale;
@@ -197,7 +198,7 @@ public class SettingsValues {
         mKeyPreviewPopupOn = prefs.getBoolean(Settings.PREF_POPUP_ON, Defaults.PREF_POPUP_ON);
         mSlidingKeyInputPreviewEnabled = prefs.getBoolean(
                 DebugSettings.PREF_SLIDING_KEY_INPUT_PREVIEW, Defaults.PREF_SLIDING_KEY_INPUT_PREVIEW);
-        mShowsVoiceInputKey = mInputAttributes.mShouldShowVoiceInputKey;
+        mShowsVoiceInputKey = computeShowsVoiceInputKey(context, mInputAttributes, prefs);
         String languagePref = prefs.getString(Settings.PREF_LANGUAGE_SWITCH_KEY, Defaults.PREF_LANGUAGE_SWITCH_KEY);
         mLanguageSwitchKeyToOtherImes = languagePref.equals("input_method") || languagePref.equals("both");
         mLanguageSwitchKeyToOtherSubtypes = mIsLocked || languagePref.equals("internal") || languagePref.equals("both");
@@ -266,7 +267,8 @@ public class SettingsValues {
         mSuggestionsEnabled = prefs.getBoolean(Settings.PREF_SHOW_SUGGESTIONS, Defaults.PREF_SHOW_SUGGESTIONS)
             && (mInputAttributes.mShouldShowSuggestions || mOverrideShowingSuggestions) && !mSuggestionStripHiddenPerUserSettings;
         mSecondaryStripVisible = mToolbarMode != ToolbarMode.HIDDEN || ! mToolbarHidingGlobal;
-        mIncognitoModeEnabled = prefs.getBoolean(Settings.PREF_ALWAYS_INCOGNITO_MODE, Defaults.PREF_ALWAYS_INCOGNITO_MODE) || mInputAttributes.mNoLearning
+        mIncognitoModeEnabled = prefs.getBoolean(Settings.PREF_ALWAYS_INCOGNITO_MODE, Defaults.PREF_ALWAYS_INCOGNITO_MODE)
+                || mInputAttributes.mNoLearning
                 || mInputAttributes.mIsPasswordField;
         mBottomRowScale = Settings.readBottomRowScale(prefs, isLandscape, isFolded);
         mSpaceSwipeHorizontal = Settings.readHorizontalSpaceSwipe(prefs);
@@ -451,5 +453,31 @@ public class SettingsValues {
         sb.append("" + mDisplayOrientation);
         sb.append("\n   mAppWorkarounds = ");
         return sb.toString();
+    }
+
+    private static boolean computeShowsVoiceInputKey(
+            final Context context, final InputAttributes attrs, final SharedPreferences prefs) {
+        if (attrs.mShouldShowVoiceInputKey) return true;
+        final boolean allowVoiceOnPassword = readAllowVoiceOnPassword(prefs);
+        if (VoiceInputUtils.isSonioxConfigured(context)
+                && attrs.isVoiceInputAllowedWithoutShortcutIme(allowVoiceOnPassword)) {
+            return true;
+        }
+        if (allowVoiceOnPassword && attrs.mIsPasswordField
+                && attrs.isVoiceInputAllowedOnPasswordField()
+                && RichInputMethodManager.isInitialized()
+                && RichInputMethodManager.getInstance().isShortcutImeReady()) {
+            return true;
+        }
+        return false;
+    }
+
+    private static boolean readAllowVoiceOnPassword(final SharedPreferences prefs) {
+        if (prefs.contains(Settings.PREF_ALLOW_VOICE_ON_PASSWORD)) {
+            return prefs.getBoolean(Settings.PREF_ALLOW_VOICE_ON_PASSWORD,
+                    Defaults.PREF_ALLOW_VOICE_ON_PASSWORD);
+        }
+        // migrate legacy setting: disabling password incognito was used to enable voice on passwords
+        return prefs.getBoolean(Settings.PREF_DISABLE_PASSWORD_INCOGNITO, false);
     }
 }

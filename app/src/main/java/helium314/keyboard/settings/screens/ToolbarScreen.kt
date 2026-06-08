@@ -137,7 +137,7 @@ fun createToolbarSettings(context: Context) = listOf(
         R.string.var_toolbar_direction, R.string.var_toolbar_direction_summary)
     {
         SwitchPreference(it, Defaults.PREF_VARIABLE_TOOLBAR_DIRECTION)
-    }
+    },
 )
 
 @Preview

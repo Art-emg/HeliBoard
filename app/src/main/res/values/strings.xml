@@ -277,6 +277,34 @@
     <string name="incognito">Force incognito mode</string>
     <!-- Description for "prefs_force_incognito_mode" option. -->
     <string name="prefs_force_incognito_mode_summary">Disable learning of new words</string>
+    <!-- Preferences item for allowing voice input on password fields -->
+    <string name="allow_voice_on_password">Voice input on password fields</string>
+    <!-- Description for allow_voice_on_password -->
+    <string name="allow_voice_on_password_summary">Keep incognito mode on passwords, but still show the microphone key</string>
+    <!-- Preferences item for voice input provider -->
+    <string name="voice_input_provider">Voice input provider</string>
+    <!-- Voice input provider: system shortcut IME -->
+    <string name="voice_input_provider_system">System voice input</string>
+    <!-- Voice input provider: Soniox API -->
+    <string name="voice_input_provider_soniox">Soniox API</string>
+    <!-- Preferences item for Soniox API key -->
+    <string name="soniox_api_key">Soniox API key</string>
+    <!-- Description for Soniox API key -->
+    <string name="soniox_api_key_summary">API key from console.soniox.com</string>
+    <!-- Preferences item for Soniox model -->
+    <string name="soniox_model">Soniox model</string>
+    <!-- Description for Soniox model -->
+    <string name="soniox_model_summary">Real-time STT model (default: stt-rt-preview)</string>
+    <!-- Shown when microphone permission is missing for Soniox voice input -->
+    <string name="soniox_microphone_permission_required">Microphone permission is required for Soniox voice input</string>
+    <!-- Shown while Soniox is connecting -->
+    <string name="soniox_connecting">Connecting…</string>
+    <!-- Shown while Soniox is listening -->
+    <string name="soniox_listening_tap_to_stop">Listening — tap mic to stop</string>
+    <!-- Custom fork settings screen title -->
+    <string name="settings_screen_custom_extensions">Voice &amp; privacy</string>
+    <!-- Shown when Soniox voice input fails -->
+    <string name="soniox_voice_input_error">Voice input failed</string>
     <!-- Content description for "popup keys" suggestions view -->
     <string name="more_keys_strip_description">More keys</string>
     <!-- Title for input language & layout selection screen -->

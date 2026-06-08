@@ -121,6 +121,14 @@ public final class Settings implements SharedPreferences.OnSharedPreferenceChang
     public static final String PREF_AUTOSPACE_BEFORE_GESTURE_TYPING = "autospace_before_gesture_typing";
     public static final String PREF_SHIFT_REMOVES_AUTOSPACE = "shift_removes_autospace";
     public static final String PREF_ALWAYS_INCOGNITO_MODE = "always_incognito_mode";
+    public static final String PREF_ALLOW_VOICE_ON_PASSWORD = "allow_voice_on_password";
+    /** @deprecated migrated to {@link #PREF_ALLOW_VOICE_ON_PASSWORD} */
+    public static final String PREF_DISABLE_PASSWORD_INCOGNITO = "disable_password_incognito";
+    public static final String PREF_VOICE_INPUT_PROVIDER = "voice_input_provider";
+    public static final String PREF_SONIOX_API_KEY = "soniox_api_key";
+    public static final String PREF_SONIOX_MODEL = "soniox_model";
+    public static final String VOICE_INPUT_PROVIDER_SYSTEM = "system";
+    public static final String VOICE_INPUT_PROVIDER_SONIOX = "soniox";
     public static final String PREF_BIGRAM_PREDICTIONS = "next_word_prediction";
     public static final String PREF_SUGGEST_PUNCTUATION = "suggest_punctuation";
     public static final String PREF_PUNCTUATION_SUGGESTIONS = "punctuation_suggestions";

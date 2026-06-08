@@ -17,6 +17,7 @@ import helium314.keyboard.latin.common.LocaleUtils.constructLocale
 import helium314.keyboard.latin.settings.SettingsSubtype.Companion.toSettingsSubtype
 import helium314.keyboard.latin.settings.getTransitionAnimationScale
 import helium314.keyboard.settings.screens.AboutScreen
+import helium314.keyboard.settings.screens.CustomExtensionsScreen
 import helium314.keyboard.settings.screens.AdvancedSettingsScreen
 import helium314.keyboard.settings.screens.AppearanceScreen
 import helium314.keyboard.settings.screens.ColorsScreen
@@ -73,6 +74,7 @@ fun SettingsNavHost(
                 onClickGestureTyping = { navController.navigate(SettingsDestination.GestureTyping) },
                 onClickDataGathering = { navController.navigate(SettingsDestination.DataGathering) },
                 onClickAdvanced = { navController.navigate(SettingsDestination.Advanced) },
+                onClickCustomExtensions = { navController.navigate(SettingsDestination.CustomExtensions) },
                 onClickAppearance = { navController.navigate(SettingsDestination.Appearance) },
                 onClickLanguage = { navController.navigate(SettingsDestination.Languages) },
                 onClickLayouts = { navController.navigate(SettingsDestination.Layouts) },
@@ -104,6 +106,9 @@ fun SettingsNavHost(
         }*/
         composable(SettingsDestination.Advanced) {
             AdvancedSettingsScreen(onClickBack = ::goBack)
+        }
+        composable(SettingsDestination.CustomExtensions) {
+            CustomExtensionsScreen(onClickBack = ::goBack)
         }
         composable(SettingsDestination.Debug) {
             DebugScreen(onClickBack = ::goBack)
@@ -154,6 +159,7 @@ object SettingsDestination {
     const val DataGathering = "data_gathering" // remove when data gathering phase is done (end of 2026 latest)
     const val DataReview = "data_review" // remove when data gathering phase is done (end of 2026 latest)
     const val Advanced = "advanced"
+    const val CustomExtensions = "custom_extensions"
     const val Debug = "debug"
     const val Appearance = "appearance"
     const val Colors = "colors/"

@@ -21,7 +21,9 @@ import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.View.OnLongClickListener
+import android.view.Gravity
 import android.view.ViewGroup
+import android.view.ViewGroup.LayoutParams
 import android.view.accessibility.AccessibilityEvent
 import android.widget.ImageButton
 import android.widget.LinearLayout
@@ -59,6 +61,7 @@ import helium314.keyboard.latin.utils.prefs
 import helium314.keyboard.latin.utils.removeFirst
 import helium314.keyboard.latin.utils.removePinnedKey
 import helium314.keyboard.latin.utils.setToolbarButtonsActivatedStateOnPrefChange
+import helium314.keyboard.latin.voice.VoiceListeningState
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.abs
 import kotlin.math.min
@@ -125,6 +128,8 @@ class SuggestionStripView(context: Context, attrs: AttributeSet?, defStyle: Int)
     private val defaultToolbarBackground: Drawable = toolbarExpandKey.background
     private val enabledToolKeyBackground = GradientDrawable()
     private var direction = 1 // 1 if LTR, -1 if RTL
+    private lateinit var voiceStatusView: TextView
+    private var isVoiceListening = false
 
     private val toolbarKeyLayoutParams = LinearLayout.LayoutParams(
         resources.getDimensionPixelSize(R.dimen.config_suggestions_strip_edge_key_width),
@@ -177,6 +182,18 @@ class SuggestionStripView(context: Context, attrs: AttributeSet?, defStyle: Int)
         }
 
         updateKeys()
+
+        voiceStatusView = TextView(context, null, R.attr.suggestionWordStyle).apply {
+            gravity = Gravity.CENTER
+            isClickable = false
+            isSingleLine = true
+            ellipsize = TextUtils.TruncateAt.END
+            setTextColor(colors.get(ColorType.SUGGESTED_WORD))
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.MATCH_PARENT,
+            )
+        }
     }
 
     private lateinit var listener: Listener
@@ -242,6 +259,11 @@ class SuggestionStripView(context: Context, attrs: AttributeSet?, defStyle: Int)
     }
 
     fun setSuggestions(suggestions: SuggestedWords, isRtlLanguage: Boolean) {
+        // While dictating, keep the listening status visible instead of swapping in suggestions.
+        if (isVoiceListening) {
+            suggestedWords = suggestions
+            return
+        }
         clear()
         setRtl(isRtlLanguage)
         suggestedWords = suggestions
@@ -510,6 +532,46 @@ class SuggestionStripView(context: Context, attrs: AttributeSet?, defStyle: Int)
         val show = Settings.getValues().mShowsVoiceInputKey
         toolbar.findViewWithTag<View>(ToolbarKey.VOICE)?.isVisible = show
         pinnedKeys.findViewWithTag<View>(ToolbarKey.VOICE)?.isVisible = show
+    }
+
+    fun setVoiceListeningState(state: VoiceListeningState) {
+        isVoiceListening = state != VoiceListeningState.OFF
+        when (state) {
+            VoiceListeningState.OFF -> {
+                removeVoiceStatusView()
+                setVoiceKeyHighlighted(false)
+                if (!isExternalSuggestionVisible)
+                    suggestionsStrip.isVisible = !toolbarContainer.isVisible
+            }
+            VoiceListeningState.CONNECTING, VoiceListeningState.LISTENING -> {
+                // Show the status in the suggestions area so the mic and toolbar keys stay tappable.
+                if (toolbarContainer.isVisible) setToolbarVisibility(false)
+                suggestionsStrip.removeAllViews()
+                removeVoiceStatusView()
+                voiceStatusView.text = context.getString(
+                    if (state == VoiceListeningState.CONNECTING) R.string.soniox_connecting
+                    else R.string.soniox_listening_tap_to_stop
+                )
+                suggestionsStrip.addView(voiceStatusView)
+                suggestionsStrip.isVisible = true
+                setVoiceKeyHighlighted(true)
+            }
+        }
+    }
+
+    private fun removeVoiceStatusView() {
+        (voiceStatusView.parent as? ViewGroup)?.removeView(voiceStatusView)
+    }
+
+    private fun setVoiceKeyHighlighted(active: Boolean) {
+        toolbar.findViewWithTag<ImageButton>(ToolbarKey.VOICE)?.let {
+            it.isActivated = active
+            it.background = if (active) enabledToolKeyBackground else defaultToolbarBackground.constantState?.newDrawable(resources)
+        }
+        pinnedKeys.findViewWithTag<ImageButton>(ToolbarKey.VOICE)?.let {
+            it.isActivated = active
+            it.background = if (active) enabledToolKeyBackground else null
+        }
     }
 
     private fun updateKeys() {

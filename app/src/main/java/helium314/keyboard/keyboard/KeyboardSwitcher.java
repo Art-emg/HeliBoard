@@ -35,6 +35,8 @@ import helium314.keyboard.keyboard.clipboard.ClipboardHistoryView;
 import helium314.keyboard.keyboard.emoji.EmojiPalettesView;
 import helium314.keyboard.keyboard.internal.KeyboardState;
 import helium314.keyboard.keyboard.internal.keyboard_parser.EmojiParserKt;
+import helium314.keyboard.keyboard.internal.keyboard_parser.floris.KeyCode;
+import helium314.keyboard.latin.voice.VoiceListeningState;
 import helium314.keyboard.latin.utils.FloatingKeyboardUtils;
 import helium314.keyboard.latin.InputView;
 import helium314.keyboard.latin.KeyboardWrapperView;
@@ -211,7 +213,7 @@ public final class KeyboardSwitcher implements KeyboardState.SwitchActions {
         keyboardView.setKeyboard(newKeyboard);
         mCurrentInputView.setKeyboardTopPadding(newKeyboard.mTopPadding);
         keyboardView.setKeyPreviewPopupEnabled(currentSettingsValues.mKeyPreviewPopupOn);
-        keyboardView.updateShortcutKey(mRichImm.isShortcutImeReady());
+        keyboardView.updateShortcutKey(currentSettingsValues.mShowsVoiceInputKey);
         final boolean subtypeChanged = (oldKeyboard == null) || !newKeyboard.mId.mSubtype.equals(oldKeyboard.mId.mSubtype);
         final int languageOnSpacebarFormatType = LanguageOnSpacebarUtils.getLanguageOnSpacebarFormatType(newKeyboard.mId.mSubtype);
         final boolean hasMultipleEnabledIMEsOrSubtypes = mRichImm.hasMultipleEnabledIMEsOrSubtypes(true);
@@ -774,6 +776,15 @@ public final class KeyboardSwitcher implements KeyboardState.SwitchActions {
     // used for debug
     public String getLocaleAndConfidenceInfo() {
         return mLatinIME.getLocaleAndConfidenceInfo();
+    }
+
+    public void setVoiceListeningState(final VoiceListeningState state) {
+        if (mSuggestionStripView != null) {
+            mSuggestionStripView.setVoiceListeningState(state);
+        }
+        if (mKeyboardView != null) {
+            mKeyboardView.updateLockState(KeyCode.VOICE_INPUT, state != VoiceListeningState.OFF);
+        }
     }
 
     /** Marks the theme as outdated. The theme will be reloaded next time the keyboard is shown.
