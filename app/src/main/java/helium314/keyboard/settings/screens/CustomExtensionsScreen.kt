@@ -36,9 +36,12 @@ fun CustomExtensionsScreen(onClickBack: () -> Unit) {
         title = stringResource(R.string.settings_screen_custom_extensions),
         settings = listOf(
             Settings.PREF_VOICE_INPUT_PROVIDER,
+            Settings.PREF_VOICE_KEY_PLACEMENT,
             Settings.PREF_SONIOX_API_KEY,
             Settings.PREF_SONIOX_MODEL,
             Settings.PREF_ALLOW_VOICE_ON_PASSWORD,
+            Settings.PREF_SONIOX_LISTENING_SOUND,
+            Settings.PREF_SONIOX_LISTENING_VIBRATE,
         ),
     )
 }
@@ -63,6 +66,16 @@ fun createCustomExtensionsSettings(context: Context) = listOf(
             KeyboardSwitcher.getInstance().setThemeNeedsReload()
         }
     },
+    Setting(context, Settings.PREF_VOICE_KEY_PLACEMENT, R.string.voice_key_placement) { setting ->
+        val items = listOf(
+            stringResource(R.string.voice_key_placement_dedicated) to Settings.VOICE_KEY_PLACEMENT_DEDICATED,
+            stringResource(R.string.voice_key_placement_period_long_press) to Settings.VOICE_KEY_PLACEMENT_PERIOD_LONG_PRESS,
+            stringResource(R.string.voice_key_placement_toolbar) to Settings.VOICE_KEY_PLACEMENT_TOOLBAR,
+        )
+        ListPreference(setting, items, Defaults.PREF_VOICE_KEY_PLACEMENT) {
+            KeyboardSwitcher.getInstance().setThemeNeedsReload()
+        }
+    },
     Setting(context, Settings.PREF_SONIOX_API_KEY,
         R.string.soniox_api_key, R.string.soniox_api_key_summary)
     { setting ->
@@ -79,6 +92,16 @@ fun createCustomExtensionsSettings(context: Context) = listOf(
         SwitchPreference(it, Defaults.PREF_ALLOW_VOICE_ON_PASSWORD) {
             KeyboardSwitcher.getInstance().setThemeNeedsReload()
         }
+    },
+    Setting(context, Settings.PREF_SONIOX_LISTENING_SOUND,
+        R.string.voice_listening_start_sound, R.string.voice_listening_start_sound_summary)
+    {
+        SwitchPreference(it, Defaults.PREF_SONIOX_LISTENING_SOUND)
+    },
+    Setting(context, Settings.PREF_SONIOX_LISTENING_VIBRATE,
+        R.string.voice_listening_start_vibrate, R.string.voice_listening_start_vibrate_summary)
+    {
+        SwitchPreference(it, Defaults.PREF_SONIOX_LISTENING_VIBRATE)
     },
 )
 

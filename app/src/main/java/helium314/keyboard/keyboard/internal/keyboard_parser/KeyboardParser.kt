@@ -23,6 +23,7 @@ import helium314.keyboard.latin.utils.POPUP_KEYS_NUMBER
 import helium314.keyboard.latin.utils.replaceFirst
 import helium314.keyboard.latin.utils.splitAt
 import helium314.keyboard.latin.utils.sumOf
+import helium314.keyboard.latin.voice.VoiceKeyboardLayout
 import kotlin.math.roundToInt
 
 /**
@@ -86,6 +87,11 @@ class KeyboardParser(private val params: KeyboardParams, private val context: Co
             }
         }
 
+        return finalizeVoiceKeyLayout(keysInRows)
+    }
+
+    private fun finalizeVoiceKeyLayout(keysInRows: ArrayList<ArrayList<KeyParams>>): ArrayList<ArrayList<KeyParams>> {
+        VoiceKeyboardLayout.apply(keysInRows, params)
         return keysInRows
     }
 

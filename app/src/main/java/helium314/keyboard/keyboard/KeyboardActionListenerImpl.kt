@@ -104,6 +104,13 @@ class KeyboardActionListenerImpl(private val latinIME: LatinIME, private val inp
         if (Settings.getValues().mIsLocked && KeyCode.isIsBlockedWhenLocked(primaryCode))
             return
         val mkv = keyboardSwitcher.mainKeyboardView
+        if (latinIME.isVoiceRecordingActive
+                && Settings.getValues().mVoiceKeyPlacement == Settings.VOICE_KEY_PLACEMENT_PERIOD_LONG_PRESS
+                && isVoicePeriodKey(primaryCode)) {
+            latinIME.onEvent(Event.createSoftwareKeypressEvent(
+                KeyCode.VOICE_INPUT, metaState, mkv.getKeyX(x), mkv.getKeyY(y), isKeyRepeat))
+            return
+        }
 
         // checking if the character is a combining accent
         val event = if (primaryCode in combiningRange) { // todo: should this be done later, maybe in inputLogic?
@@ -352,6 +359,14 @@ class KeyboardActionListenerImpl(private val latinIME: LatinIME, private val inp
         val newDecoder = HardwareKeyboardEventDecoder(deviceId)
         hardwareEventDecoders.put(deviceId, newDecoder)
         return newDecoder
+    }
+
+    private fun isVoicePeriodKey(primaryCode: Int): Boolean {
+        val keyboard = keyboardSwitcher.keyboard ?: return false
+        for (key in keyboard.sortedKeys) {
+            if (key.voiceOnLongPress() && key.code == primaryCode) return true
+        }
+        return false
     }
 
     // -------------------------- meta state handling -----------------------------

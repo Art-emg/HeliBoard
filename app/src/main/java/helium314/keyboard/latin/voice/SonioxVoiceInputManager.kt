@@ -53,6 +53,8 @@ class SonioxVoiceInputManager(
     private val onFinalText: (String) -> Unit,
     private val onError: (String) -> Unit,
     private val onStateChanged: (VoiceListeningState) -> Unit,
+    private val onAudioLevel: (Float) -> Unit = {},
+    private val onListeningReady: () -> Unit = {},
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val client = OkHttpClient.Builder()
@@ -205,6 +207,8 @@ class SonioxVoiceInputManager(
                 while (isActive && capturing) {
                     val read = record.read(chunk, 0, chunk.size)
                     if (read > 0) {
+                        val level = computeAudioLevel(chunk, read)
+                        scope.launch(Dispatchers.Main) { onAudioLevel(level) }
                         try {
                             ws.send(ByteString.of(*chunk.copyOf(read)))
                         } catch (e: Exception) {
@@ -301,8 +305,33 @@ class SonioxVoiceInputManager(
     }
 
     private fun setState(newState: VoiceListeningState) {
+        val previous = uiState
         uiState = newState
-        scope.launch(Dispatchers.Main) { onStateChanged(newState) }
+        scope.launch(Dispatchers.Main) {
+            if (previous != VoiceListeningState.LISTENING && newState == VoiceListeningState.LISTENING) {
+                onListeningReady()
+            }
+            onStateChanged(newState)
+        }
+    }
+
+    /** Normalized RMS level (0..1) from 16-bit PCM mono samples. */
+    private fun computeAudioLevel(chunk: ByteArray, length: Int): Float {
+        if (length < 2) return 0f
+        var sumSquares = 0.0
+        var samples = 0
+        var i = 0
+        while (i + 1 < length) {
+            val lo = chunk[i].toInt() and 0xFF
+            val hi = chunk[i + 1].toInt()
+            val sample = (lo or (hi shl 8)).toShort().toInt()
+            sumSquares += sample.toDouble() * sample
+            samples++
+            i += 2
+        }
+        if (samples == 0) return 0f
+        val rms = kotlin.math.sqrt(sumSquares / samples).toFloat() / 32768f
+        return (rms * 5f).coerceIn(0f, 1f)
     }
 
     @Serializable

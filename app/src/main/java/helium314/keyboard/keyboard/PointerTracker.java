@@ -1174,6 +1174,13 @@ public final class PointerTracker implements PointerTrackerQueue.Element,
             sListener.toggleNumpad(true, true);
             return;
         }
+        if (key.voiceOnLongPress()) {
+            cancelKeyTracking();
+            sListener.onPressKey(KeyCode.VOICE_INPUT, 0, true, HapticEvent.KEY_LONG_PRESS);
+            sListener.onCodeInput(KeyCode.VOICE_INPUT, Constants.NOT_A_COORDINATE, Constants.NOT_A_COORDINATE, false);
+            sListener.onReleaseKey(KeyCode.VOICE_INPUT, false);
+            return;
+        }
 
         setReleasedKeyGraphics(key, false);
         final PopupKeysPanel popupKeysPanel = sDrawingProxy.showPopupKeysKeyboard(key, this);

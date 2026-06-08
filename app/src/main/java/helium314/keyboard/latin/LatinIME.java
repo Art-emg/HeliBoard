@@ -1435,6 +1435,10 @@ public class LatinIME extends InputMethodService implements
         mKeyboardSwitcher.onEvent(event, getCurrentAutoCapsState(), getCurrentRecapitalizeState());
     }
 
+    public boolean isVoiceRecordingActive() {
+        return mSonioxVoiceInput != null && mSonioxVoiceInput.isRecordingActive();
+    }
+
     private SonioxVoiceInputManager getSonioxVoiceInput() {
         if (mSonioxVoiceInput == null) {
             mSonioxVoiceInput = new SonioxVoiceInputManager(
@@ -1453,10 +1457,30 @@ public class LatinIME extends InputMethodService implements
                     state -> {
                         mHandler.post(() -> mKeyboardSwitcher.setVoiceListeningState(state));
                         return kotlin.Unit.INSTANCE;
+                    },
+                    level -> {
+                        mHandler.post(() -> mKeyboardSwitcher.setVoiceAudioLevel(level));
+                        return kotlin.Unit.INSTANCE;
+                    },
+                    () -> {
+                        mHandler.post(this::onVoiceListeningReady);
+                        return kotlin.Unit.INSTANCE;
                     }
             );
         }
         return mSonioxVoiceInput;
+    }
+
+    private void onVoiceListeningReady() {
+        final SettingsValues settings = mSettings.getCurrent();
+        final AudioAndHapticFeedbackManager feedback = AudioAndHapticFeedbackManager.getInstance();
+        if (settings.mSonioxListeningSound) {
+            feedback.playVoiceListeningReadySound(settings.mKeypressSoundVolume);
+        }
+        if (settings.mSonioxListeningVibrate && settings.mVibrateOn) {
+            final MainKeyboardView keyboardView = mKeyboardSwitcher.getMainKeyboardView();
+            feedback.performHapticFeedback(keyboardView, HapticEvent.KEY_LONG_PRESS);
+        }
     }
 
     public void onTextInput(final String rawText) {

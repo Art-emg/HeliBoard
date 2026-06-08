@@ -127,8 +127,17 @@ public final class Settings implements SharedPreferences.OnSharedPreferenceChang
     public static final String PREF_VOICE_INPUT_PROVIDER = "voice_input_provider";
     public static final String PREF_SONIOX_API_KEY = "soniox_api_key";
     public static final String PREF_SONIOX_MODEL = "soniox_model";
+    public static final String PREF_SONIOX_LISTENING_SOUND = "soniox_listening_sound";
+    public static final String PREF_SONIOX_LISTENING_VIBRATE = "soniox_listening_vibrate";
     public static final String VOICE_INPUT_PROVIDER_SYSTEM = "system";
     public static final String VOICE_INPUT_PROVIDER_SONIOX = "soniox";
+    public static final String PREF_VOICE_KEY_PLACEMENT = "voice_key_placement";
+    /** Voice key in the expandable toolbar / suggestion strip (legacy). */
+    public static final String VOICE_KEY_PLACEMENT_TOOLBAR = "toolbar";
+    /** Dedicated microphone key immediately left of Enter. */
+    public static final String VOICE_KEY_PLACEMENT_DEDICATED = "dedicated";
+    /** Long-press the period key (left of Enter); shows a mic hint on that key. */
+    public static final String VOICE_KEY_PLACEMENT_PERIOD_LONG_PRESS = "period_long_press";
     public static final String PREF_BIGRAM_PREDICTIONS = "next_word_prediction";
     public static final String PREF_SUGGEST_PUNCTUATION = "suggest_punctuation";
     public static final String PREF_PUNCTUATION_SUGGESTIONS = "punctuation_suggestions";

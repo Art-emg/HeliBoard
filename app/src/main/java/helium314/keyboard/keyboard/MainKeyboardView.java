@@ -17,7 +17,10 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Paint.Align;
+import android.graphics.RectF;
 import android.graphics.Typeface;
+import android.graphics.drawable.Drawable;
+import android.os.SystemClock;
 import android.util.AttributeSet;
 import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
@@ -59,6 +62,7 @@ import helium314.keyboard.latin.utils.KtxKt;
 import helium314.keyboard.latin.utils.LanguageOnSpacebarUtils;
 import helium314.keyboard.latin.utils.Log;
 import helium314.keyboard.latin.utils.TypefaceUtils;
+import helium314.keyboard.latin.voice.VoiceListeningState;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -93,6 +97,24 @@ public final class MainKeyboardView extends KeyboardView implements DrawingProxy
     // Stuff to draw altCodeWhileTyping keys.
     private final ObjectAnimator mAltCodeKeyWhileTypingFadeoutAnimator;
     private final ObjectAnimator mAltCodeKeyWhileTypingFadeinAnimator;
+
+    private VoiceListeningState mVoiceListeningState = VoiceListeningState.OFF;
+    private float mVoicePulseAlpha = 1f;
+    private float mVoiceAudioLevel = 0f;
+    private static final int VOICE_CONNECTING_COLOR = 0xFF2196F3;
+    private static final int VOICE_LISTENING_COLOR = 0xFF4CAF50;
+    private final Paint mVoiceOverlayPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final RectF mVoiceOverlayRect = new RectF();
+    private final Runnable mVoicePulseRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (mVoiceListeningState != VoiceListeningState.CONNECTING) return;
+            final float phase = (SystemClock.uptimeMillis() % 1200L) / 1200f;
+            mVoicePulseAlpha = 0.45f + 0.55f * (0.5f + 0.5f * (float) Math.sin(phase * 2 * Math.PI));
+            invalidateVoiceTargetKey();
+            postDelayed(this, 16);
+        }
+    };
 
     // Drawing preview placer view
     private final DrawingPreviewPlacerView mDrawingPreviewPlacerView;
@@ -164,6 +186,7 @@ public final class MainKeyboardView extends KeyboardView implements DrawingProxy
                 R.styleable.MainKeyboardView_backgroundDimAlpha, 0);
         mBackgroundDimAlphaPaint.setColor(Color.BLACK);
         mBackgroundDimAlphaPaint.setAlpha(backgroundDimAlpha);
+        mVoiceOverlayPaint.setStyle(Paint.Style.FILL);
         mLanguageOnSpacebarTextRatio = mainKeyboardViewAttr.getFraction(
                 R.styleable.MainKeyboardView_languageOnSpacebarTextRatio, 1, 1, 1.0f)
                 * Settings.getValues().mFontSizeMultiplier;
@@ -670,6 +693,83 @@ public final class MainKeyboardView extends KeyboardView implements DrawingProxy
         }
         lockKey.setLocked(locked);
         invalidateKey(lockKey);
+    }
+
+    /** Visual feedback for Soniox / voice dictation on the keyboard voice target key. */
+    public void updateVoiceListeningState(final VoiceListeningState state) {
+        mVoiceListeningState = state;
+        removeCallbacks(mVoicePulseRunnable);
+        final Key target = findVoiceTargetKey();
+        if (target == null) return;
+        target.setLocked(false);
+        if (state == VoiceListeningState.CONNECTING) {
+            mVoicePulseAlpha = 1f;
+            mVoiceAudioLevel = 0f;
+            post(mVoicePulseRunnable);
+        } else if (state == VoiceListeningState.LISTENING) {
+            mVoiceAudioLevel = 0f;
+        } else {
+            mVoicePulseAlpha = 1f;
+            mVoiceAudioLevel = 0f;
+        }
+        invalidateKey(target);
+    }
+
+    /** Audio-reactive pulse while listening (0..1). */
+    public void updateVoiceAudioLevel(final float level) {
+        if (mVoiceListeningState != VoiceListeningState.LISTENING) return;
+        mVoiceAudioLevel = level;
+        invalidateVoiceTargetKey();
+    }
+
+    @Nullable
+    private Key findVoiceTargetKey() {
+        final Keyboard keyboard = getKeyboard();
+        if (keyboard == null) return null;
+        if (Settings.VOICE_KEY_PLACEMENT_DEDICATED.equals(Settings.getValues().mVoiceKeyPlacement)) {
+            return keyboard.getKey(KeyCode.VOICE_INPUT);
+        }
+        if (Settings.VOICE_KEY_PLACEMENT_PERIOD_LONG_PRESS.equals(Settings.getValues().mVoiceKeyPlacement)) {
+            for (final Key key : keyboard.getSortedKeys()) {
+                if (key.voiceOnLongPress()) return key;
+            }
+        }
+        return null;
+    }
+
+    private void invalidateVoiceTargetKey() {
+        final Key target = findVoiceTargetKey();
+        if (target != null) invalidateKey(target);
+    }
+
+    @Override
+    protected void onDrawKeyBackground(@NonNull final Key key, @NonNull final Canvas canvas,
+            @NonNull final Drawable background) {
+        background.setAlpha(255);
+        super.onDrawKeyBackground(key, canvas, background);
+        final Key target = findVoiceTargetKey();
+        if (target == key && mVoiceListeningState != VoiceListeningState.OFF) {
+            drawVoiceStateOverlay(key, canvas);
+        }
+    }
+
+    private void drawVoiceStateOverlay(final Key key, final Canvas canvas) {
+        final int keyWidth = key.getDrawWidth();
+        final int keyHeight = key.getHeight();
+        final float cornerRadius = 4f * getResources().getDisplayMetrics().density;
+        mVoiceOverlayRect.set(0, 0, keyWidth, keyHeight);
+        final float alpha;
+        final int color;
+        if (mVoiceListeningState == VoiceListeningState.CONNECTING) {
+            color = VOICE_CONNECTING_COLOR;
+            alpha = 0.30f + 0.50f * mVoicePulseAlpha;
+        } else {
+            color = VOICE_LISTENING_COLOR;
+            alpha = 0.25f + 0.60f * mVoiceAudioLevel;
+        }
+        mVoiceOverlayPaint.setColor(color);
+        mVoiceOverlayPaint.setAlpha((int) (255 * alpha));
+        canvas.drawRoundRect(mVoiceOverlayRect, cornerRadius, cornerRadius, mVoiceOverlayPaint);
     }
 
     // the whole language on spacebar thing could probably be simplified quite a bit

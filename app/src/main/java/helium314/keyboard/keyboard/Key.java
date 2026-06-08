@@ -145,6 +145,7 @@ public class Key implements Comparable<Key> {
     private static final int ACTION_FLAGS_NO_KEY_PREVIEW = 0x02;
     private static final int ACTION_FLAGS_ALT_CODE_WHILE_TYPING = 0x04;
     private static final int ACTION_FLAGS_ENABLE_LONG_PRESS = 0x08;
+    private static final int ACTION_FLAGS_VOICE_LONG_PRESS = 0x10;
 
     @Nullable
     private final KeyVisualAttributes mKeyVisualAttributes;
@@ -548,8 +549,13 @@ public class Key implements Comparable<Key> {
 
     public final boolean isLongPressEnabled() {
         // We need not start long press timer on the key which has activated shifted letter.
-        return (mActionFlags & ACTION_FLAGS_ENABLE_LONG_PRESS) != 0
+        return ((mActionFlags & ACTION_FLAGS_ENABLE_LONG_PRESS) != 0 || voiceOnLongPress())
                 && (mLabelFlags & LABEL_FLAGS_SHIFTED_LETTER_ACTIVATED) == 0;
+    }
+
+    /** Long-press triggers voice input (period key placement mode). */
+    public final boolean voiceOnLongPress() {
+        return (mActionFlags & ACTION_FLAGS_VOICE_LONG_PRESS) != 0;
     }
 
     public KeyVisualAttributes getVisualAttributes() {
@@ -1303,6 +1309,37 @@ public class Key implements Comparable<Key> {
             mPopupKeysColumnAndFlags = keyParams.mPopupKeysColumnAndFlags;
             mBackgroundType = keyParams.mBackgroundType;
             mActionFlags = keyParams.mActionFlags;
+            mKeyVisualAttributes = keyParams.mKeyVisualAttributes;
+            mOptionalAttributes = keyParams.mOptionalAttributes;
+        }
+
+        /** Period-key voice mode: long-press starts dictation; show mic hint icon. */
+        public KeyParams withVoiceLongPressMicHint() {
+            return new KeyParams(this, ACTION_FLAGS_VOICE_LONG_PRESS,
+                    ToolbarUtilsKt.getToolbarKeyStrings().get(ToolbarKey.VOICE));
+        }
+
+        private KeyParams(final KeyParams keyParams, final int additionalActionFlags,
+                @Nullable final String overrideHintIconName) {
+            xPos = keyParams.xPos;
+            yPos = keyParams.yPos;
+            mWidth = keyParams.mWidth;
+            mHeight = keyParams.mHeight;
+            isSpacer = keyParams.isSpacer;
+            mKeyboardParams = keyParams.mKeyboardParams;
+            mEnabled = keyParams.mEnabled;
+            mCode = keyParams.mCode;
+            mLabel = keyParams.mLabel;
+            mHintLabel = keyParams.mHintLabel;
+            mHintIconName = overrideHintIconName != null ? overrideHintIconName : keyParams.mHintIconName;
+            mLabelFlags = keyParams.mLabelFlags;
+            mIconName = keyParams.mIconName;
+            mAbsoluteWidth = keyParams.mAbsoluteWidth;
+            mAbsoluteHeight = keyParams.mAbsoluteHeight;
+            mPopupKeys = keyParams.mPopupKeys;
+            mPopupKeysColumnAndFlags = keyParams.mPopupKeysColumnAndFlags;
+            mBackgroundType = keyParams.mBackgroundType;
+            mActionFlags = keyParams.mActionFlags | additionalActionFlags;
             mKeyVisualAttributes = keyParams.mKeyVisualAttributes;
             mOptionalAttributes = keyParams.mOptionalAttributes;
         }

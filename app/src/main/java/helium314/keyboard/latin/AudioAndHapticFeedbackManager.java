@@ -127,4 +127,15 @@ public final class AudioAndHapticFeedbackManager {
         mDoNotDisturb = doNotDisturb;
         mSoundOn = reevaluateIfSoundIsOn();
     }
+
+    /** Short cue when voice dictation is ready to accept speech. */
+    public void playVoiceListeningReadySound(final float volume) {
+        if (mAudioManager == null || mDoNotDisturb) {
+            return;
+        }
+        if (mAudioManager.getRingerMode() != AudioManager.RINGER_MODE_NORMAL) {
+            return;
+        }
+        mAudioManager.playSoundEffect(AudioManager.FX_KEYPRESS_STANDARD, volume);
+    }
 }

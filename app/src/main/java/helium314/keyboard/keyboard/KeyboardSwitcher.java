@@ -779,11 +779,14 @@ public final class KeyboardSwitcher implements KeyboardState.SwitchActions {
     }
 
     public void setVoiceListeningState(final VoiceListeningState state) {
-        if (mSuggestionStripView != null) {
-            mSuggestionStripView.setVoiceListeningState(state);
-        }
         if (mKeyboardView != null) {
-            mKeyboardView.updateLockState(KeyCode.VOICE_INPUT, state != VoiceListeningState.OFF);
+            mKeyboardView.updateVoiceListeningState(state);
+        }
+    }
+
+    public void setVoiceAudioLevel(final float level) {
+        if (mKeyboardView != null) {
+            mKeyboardView.updateVoiceAudioLevel(level);
         }
     }
 

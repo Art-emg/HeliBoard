@@ -303,8 +303,21 @@
     <string name="soniox_listening_tap_to_stop">Listening — tap mic to stop</string>
     <!-- Custom fork settings screen title -->
     <string name="settings_screen_custom_extensions">Voice &amp; privacy</string>
+    <!-- Where to show the voice / dictation key -->
+    <string name="voice_key_placement">Voice key placement</string>
+    <string name="voice_key_placement_dedicated">Dedicated key (left of Enter)</string>
+    <string name="voice_key_placement_period_long_press">Long-press period key</string>
+    <string name="voice_key_placement_toolbar">Toolbar only</string>
     <!-- Shown when Soniox voice input fails -->
     <string name="soniox_voice_input_error">Voice input failed</string>
+    <!-- Title for sound when voice listening actually starts -->
+    <string name="voice_listening_start_sound">Sound when listening starts</string>
+    <!-- Description for voice_listening_start_sound -->
+    <string name="voice_listening_start_sound_summary">Play a short sound when the microphone is ready for dictation</string>
+    <!-- Title for vibration when voice listening actually starts -->
+    <string name="voice_listening_start_vibrate">Vibrate when listening starts</string>
+    <!-- Description for voice_listening_start_vibrate -->
+    <string name="voice_listening_start_vibrate_summary">Vibrate when the microphone is ready for dictation</string>
     <!-- Content description for "popup keys" suggestions view -->
     <string name="more_keys_strip_description">More keys</string>
     <!-- Title for input language & layout selection screen -->
