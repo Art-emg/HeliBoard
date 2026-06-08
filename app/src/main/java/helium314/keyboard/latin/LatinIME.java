@@ -1476,6 +1476,11 @@ public class LatinIME extends InputMethodService implements
         String text = token;
         if (mSettings.getCurrent().mSonioxStripPunctuation) {
             text = SttTextUtils.stripSttPunctuation(text);
+            if (text.isEmpty()) {
+                return;
+            }
+            final CharSequence before = mInputLogic.mConnection.getTextBeforeCursor(8, 0);
+            text = SttTextUtils.ensureLeadingSpaceForDictation(before, text);
         }
         onTextInput(text);
     }

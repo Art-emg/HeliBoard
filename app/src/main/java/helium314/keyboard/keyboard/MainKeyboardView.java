@@ -30,6 +30,7 @@ import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 
 import helium314.keyboard.accessibility.AccessibilityUtils;
 import helium314.keyboard.accessibility.MainKeyboardAccessibilityDelegate;
@@ -742,6 +743,27 @@ public final class MainKeyboardView extends KeyboardView implements DrawingProxy
         if (target != null) invalidateKey(target);
     }
 
+    /** Redraw voice target key (e.g. no-punctuation badge toggled). */
+    public void refreshVoiceKeyVisuals() {
+        invalidateVoiceTargetKey();
+    }
+
+    private void drawVoiceNoPunctBadge(final Key key, final Canvas canvas) {
+        if (!Settings.getValues().mSonioxStripPunctuation) return;
+        final Key target = findVoiceTargetKey();
+        if (target != key) return;
+        final Drawable badge = ContextCompat.getDrawable(getContext(), R.drawable.ic_no_punct_badge);
+        if (badge == null) return;
+        final float density = getResources().getDisplayMetrics().density;
+        final int keyWidth = key.getDrawWidth();
+        final int badgeSize = (int) (11f * density);
+        final int margin = (int) (2f * density);
+        final int left = keyWidth - badgeSize - margin;
+        final int top = margin;
+        badge.setBounds(left, top, left + badgeSize, top + badgeSize);
+        badge.draw(canvas);
+    }
+
     @Override
     protected void onDrawKeyBackground(@NonNull final Key key, @NonNull final Canvas canvas,
             @NonNull final Drawable background) {
@@ -808,6 +830,9 @@ public final class MainKeyboardView extends KeyboardView implements DrawingProxy
             params.mAnimAlpha = Constants.Color.ALPHA_OPAQUE;
         }
         super.onDrawKeyTopVisuals(key, canvas, paint, params);
+        if (key.getCode() == KeyCode.VOICE_INPUT || key.voiceOnLongPress()) {
+            drawVoiceNoPunctBadge(key, canvas);
+        }
         final int code = key.getCode();
         if (code == Constants.CODE_SPACE) {
             // If input language are explicitly selected.

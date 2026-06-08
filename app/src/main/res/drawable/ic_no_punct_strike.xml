@@ -1,0 +1,22 @@
+<!--
+    SPDX-License-Identifier: Apache-2.0
+    No STT punctuation (strip on): exclamation mark with strike-through.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFF"
+        android:pathData="M13,3h-2v12h2z" />
+    <path
+        android:fillColor="#FFF"
+        android:pathData="M12,18m-2,0a2,2 0,1 1,4 0a2,2 0,1 1,-4 0" />
+    <path
+        android:fillColor="@android:color/transparent"
+        android:pathData="M6,5 L18,19"
+        android:strokeWidth="2.2"
+        android:strokeColor="#FFF"
+        android:strokeLineCap="round" />
+</vector>

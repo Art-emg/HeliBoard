@@ -20,8 +20,19 @@ class SttTextUtilsTest {
         assertEquals("It's fine", SttTextUtils.stripSttPunctuation("It's fine."))
     }
 
+    @Test fun trimsTrailingPunctuationOnly() {
+        assertEquals("Hello", SttTextUtils.stripSttPunctuation("Hello."))
+    }
+
     @Test fun cyrillic() {
         assertEquals("Привет мир", SttTextUtils.stripSttPunctuation("Привет, мир"))
         assertEquals("Один два", SttTextUtils.stripSttPunctuation("Один. Два"))
+    }
+
+    @Test fun ensureLeadingSpaceBetweenChunks() {
+        assertEquals(" world", SttTextUtils.ensureLeadingSpaceForDictation("Hello", "world"))
+        assertEquals("world", SttTextUtils.ensureLeadingSpaceForDictation("", "world"))
+        assertEquals("world", SttTextUtils.ensureLeadingSpaceForDictation("Hello ", "world"))
+        assertEquals(" next", SttTextUtils.ensureLeadingSpaceForDictation("Hello.", "next"))
     }
 }

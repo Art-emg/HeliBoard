@@ -100,7 +100,11 @@ class KeyboardActionListenerImpl(private val latinIME: LatinIME, private val inp
         when (primaryCode) {
             KeyCode.TOGGLE_AUTOCORRECT -> return settings.toggleAutoCorrect()
             KeyCode.TOGGLE_INCOGNITO_MODE -> return settings.toggleAlwaysIncognitoMode()
-            KeyCode.TOGGLE_SONIOX_STRIP_PUNCTUATION -> return settings.toggleSonioxStripPunctuation()
+            KeyCode.TOGGLE_SONIOX_STRIP_PUNCTUATION -> {
+                settings.toggleSonioxStripPunctuation()
+                keyboardSwitcher.mainKeyboardView?.refreshVoiceKeyVisuals()
+                return
+            }
         }
         if (Settings.getValues().mIsLocked && KeyCode.isIsBlockedWhenLocked(primaryCode))
             return

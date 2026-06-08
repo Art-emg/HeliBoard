@@ -107,7 +107,9 @@ fun createCustomExtensionsSettings(context: Context) = listOf(
     Setting(context, Settings.PREF_SONIOX_STRIP_PUNCTUATION,
         R.string.soniox_strip_punctuation, R.string.soniox_strip_punctuation_summary)
     {
-        SwitchPreference(it, Defaults.PREF_SONIOX_STRIP_PUNCTUATION)
+        SwitchPreference(it, Defaults.PREF_SONIOX_STRIP_PUNCTUATION) {
+            KeyboardSwitcher.getInstance().mainKeyboardView?.refreshVoiceKeyVisuals()
+        }
     },
 )
 

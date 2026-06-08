@@ -1,5 +1,6 @@
 <!--
     SPDX-License-Identifier: Apache-2.0
+    Punctuation allowed (STT strip off): exclamation mark.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
@@ -8,11 +9,8 @@
     android:viewportHeight="24">
     <path
         android:fillColor="#FFF"
-        android:pathData="M12,15.5m-1.25,0a1.25,1.25 0,1 1,2.5 0a1.25,1.25 0,1 1,-2.5 0" />
+        android:pathData="M13,3h-2v12h2z" />
     <path
-        android:fillColor="@android:color/transparent"
-        android:pathData="M5,19 L19,5"
-        android:strokeWidth="2"
-        android:strokeColor="#FFF"
-        android:strokeLineCap="round" />
+        android:fillColor="#FFF"
+        android:pathData="M12,18m-2,0a2,2 0,1 1,4 0a2,2 0,1 1,-4 0" />
 </vector>

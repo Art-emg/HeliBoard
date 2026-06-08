@@ -1,0 +1,22 @@
+<!--
+    SPDX-License-Identifier: Apache-2.0
+    Mic badge: small struck exclamation (no-punctuation mode on).
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="12dp"
+    android:height="12dp"
+    android:viewportWidth="12"
+    android:viewportHeight="12">
+    <path
+        android:fillColor="#FFF"
+        android:pathData="M6.5,1.5h-1v6h1z" />
+    <path
+        android:fillColor="#FFF"
+        android:pathData="M6,9.5m-1,0a1,1 0,1 1,2 0a1,1 0,1 1,-2 0" />
+    <path
+        android:fillColor="@android:color/transparent"
+        android:pathData="M2,2 L10,10"
+        android:strokeWidth="1.4"
+        android:strokeColor="#FFF"
+        android:strokeLineCap="round" />
+</vector>

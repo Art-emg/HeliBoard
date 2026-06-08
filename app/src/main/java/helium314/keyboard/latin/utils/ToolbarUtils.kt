@@ -6,11 +6,13 @@ import android.content.SharedPreferences
 import android.view.ViewGroup
 import android.widget.ImageButton
 import android.widget.ImageView
+import androidx.core.content.ContextCompat
 import androidx.core.content.edit
 import androidx.core.view.forEach
 import helium314.keyboard.keyboard.internal.KeyboardIconsSet
 import helium314.keyboard.keyboard.internal.keyboard_parser.floris.KeyCode
 import helium314.keyboard.latin.R
+import helium314.keyboard.latin.common.ColorType
 import helium314.keyboard.latin.common.Constants.Separators
 import helium314.keyboard.latin.settings.Defaults
 import helium314.keyboard.latin.settings.Settings
@@ -26,8 +28,10 @@ fun createToolbarKey(context: Context, key: ToolbarKey): ImageButton {
     button.scaleType = ImageView.ScaleType.CENTER
     button.tag = key
     button.contentDescription = key.name.lowercase().getStringResourceOrName("", context)
+    if (key != STRIP_PUNCTUATION) {
+        button.setImageDrawable(KeyboardIconsSet.instance.getNewDrawable(key.name, context))
+    }
     setToolbarButtonActivatedState(button)
-    button.setImageDrawable(KeyboardIconsSet.instance.getNewDrawable(key.name, context))
     return button
 }
 
@@ -46,14 +50,26 @@ fun setToolbarButtonsActivatedStateOnPrefChange(buttonsGroup: ViewGroup, key: St
 }
 
 private fun setToolbarButtonActivatedState(button: ImageButton) {
+    if (button.tag == STRIP_PUNCTUATION) {
+        applyStripPunctToolbarState(button)
+        return
+    }
     button.isActivated = when (button.tag) {
         INCOGNITO -> button.context.prefs().getBoolean(Settings.PREF_ALWAYS_INCOGNITO_MODE, Defaults.PREF_ALWAYS_INCOGNITO_MODE)
         ONE_HANDED -> Settings.getValues().mOneHandedModeEnabled
         SPLIT -> Settings.getValues().mIsSplitKeyboardEnabled
         AUTOCORRECT -> Settings.getValues().mAutoCorrectionEnabledPerUserSettings
-        STRIP_PUNCTUATION -> button.context.prefs().getBoolean(
-            Settings.PREF_SONIOX_STRIP_PUNCTUATION, Defaults.PREF_SONIOX_STRIP_PUNCTUATION)
         else -> true
+    }
+}
+
+private fun applyStripPunctToolbarState(button: ImageButton) {
+    val enabled = Settings.getValues().mSonioxStripPunctuation
+    button.isActivated = enabled
+    val resId = if (enabled) R.drawable.ic_no_punct_strike else R.drawable.ic_punct_allowed
+    ContextCompat.getDrawable(button.context, resId)?.let { drawable ->
+        button.setImageDrawable(drawable)
+        Settings.getValues().mColors.setColor(drawable, ColorType.TOOL_BAR_KEY)
     }
 }
 

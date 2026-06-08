@@ -43,6 +43,25 @@ object SttTextUtils {
                 }
             }
         }
-        return sb.toString().trim()
+        // Keep leading spaces Soniox may send after sentence-ending punctuation.
+        return sb.toString().trimEnd()
+    }
+
+    /**
+     * Inserts a leading space when dictation chunks would otherwise run together after
+     * trailing punctuation was stripped from the previous chunk.
+     */
+    @JvmStatic
+    fun ensureLeadingSpaceForDictation(textBeforeCursor: CharSequence?, incoming: String): String {
+        if (incoming.isEmpty()) return incoming
+        if (incoming.first().isWhitespace()) return incoming
+        if (textBeforeCursor.isNullOrEmpty()) return incoming
+        if (!incoming.first().isLetterOrDigit()) return incoming
+        val last = textBeforeCursor.last()
+        if (last.isWhitespace()) return incoming
+        if (last.isLetterOrDigit() || last in ".,!?;:" || last == '\u2026') {
+            return " $incoming"
+        }
+        return incoming
     }
 }
