@@ -82,6 +82,8 @@
     <string name="show_emoji_key">Emoji key</string>
     <!-- Units abbreviation for the duration (milliseconds) -->
     <string name="abbreviation_unit_milliseconds">%s ms</string>
+    <!-- Units abbreviation for the duration (seconds) -->
+    <string name="abbreviation_unit_seconds">%s s</string>
     <!-- Units abbreviation for the duration (minutes) -->
     <string name="abbreviation_unit_minutes">%s min</string>
     <!-- The text that represents the current settings value is the system default -->
@@ -321,13 +323,25 @@
     <!-- Title for stripping punctuation from speech-to-text -->
     <string name="soniox_strip_punctuation">Remove STT punctuation</string>
     <!-- Description for soniox_strip_punctuation -->
-    <string name="soniox_strip_punctuation_summary">Strip punctuation from voice dictation; lowercase words that would start after removed punctuation</string>
+    <string name="soniox_strip_punctuation_summary">Strip selected punctuation from voice dictation; embedded dots between letters (e.g. x.y) are kept</string>
     <!-- Toolbar key: toggle STT punctuation removal -->
     <string name="strip_punctuation" tools:keep="@string/strip_punctuation">No STT punctuation</string>
+    <!-- Title for which STT punctuation characters to remove -->
+    <string name="soniox_strip_punctuation_chars">Punctuation to remove</string>
+    <!-- Description for soniox_strip_punctuation_chars -->
+    <string name="soniox_strip_punctuation_chars_summary">Characters to strip when at end of a word or before a space (default: . , ! ?). Dashes and mid-word dots are kept.</string>
     <!-- Long-press mic popup: keep punctuation in Soniox dictation -->
     <string name="soniox_keep_punctuation">Keep punctuation</string>
     <!-- Long-press mic popup: strip punctuation from Soniox dictation -->
     <string name="soniox_no_punctuation">No punctuation</string>
+    <!-- Title for showing Soniox partial dictation in the text field -->
+    <string name="soniox_partial_in_input">Show partial dictation in text field</string>
+    <!-- Description for soniox_partial_in_input -->
+    <string name="soniox_partial_in_input_summary">Live preview goes into the editor (underlined) instead of the suggestion strip; finalized text is committed as normal text</string>
+    <!-- Title for auto-stop dictation after silence -->
+    <string name="soniox_silence_timeout">Stop dictation after silence</string>
+    <!-- Description for soniox_silence_timeout -->
+    <string name="soniox_silence_timeout_summary">Turn off the microphone when no new dictated text is received for this long</string>
     <!-- Content description for "popup keys" suggestions view -->
     <string name="more_keys_strip_description">More keys</string>
     <!-- Title for input language & layout selection screen -->

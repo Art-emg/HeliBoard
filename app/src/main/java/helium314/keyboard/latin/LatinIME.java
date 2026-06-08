@@ -26,8 +26,9 @@ import android.util.PrintWriterPrinter;
 import android.util.Printer;
 import android.view.KeyEvent;
 import android.view.View;
-import android.widget.Toast;
 import android.view.Window;
+import android.view.WindowManager;
+import android.widget.Toast;
 import android.view.inputmethod.CompletionInfo;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InlineSuggestion;
@@ -63,6 +64,7 @@ import helium314.keyboard.latin.common.InputPointers;
 import helium314.keyboard.latin.common.ViewOutlineProviderUtilsKt;
 import helium314.keyboard.latin.define.DebugFlags;
 import helium314.keyboard.latin.inputlogic.InputLogic;
+import helium314.keyboard.latin.RichInputConnection;
 import helium314.keyboard.latin.personalization.PersonalizationHelper;
 import helium314.keyboard.latin.settings.Settings;
 import helium314.keyboard.latin.settings.SettingsValues;
@@ -194,6 +196,9 @@ public class LatinIME extends InputMethodService implements
     /** Non-final Soniox dictation preview shown in the suggestion strip; null when hidden. */
     @Nullable
     private String mSonioxPartialPreview;
+
+    /** True while a Soniox partial is shown via {@link RichInputConnection#setComposingText}. */
+    private boolean mSonioxPartialInInputActive;
 
     private final ClipboardHistoryManager mClipboardHistoryManager = new ClipboardHistoryManager(this);
 
@@ -715,6 +720,7 @@ public class LatinIME extends InputMethodService implements
             mSonioxVoiceInput.release();
             mSonioxVoiceInput = null;
         }
+        updateVoiceDictationScreenOn(VoiceListeningState.OFF);
         super.onDestroy();
         mHandler.removeCallbacksAndMessages(null);
         deallocateMemory();
@@ -1460,14 +1466,17 @@ public class LatinIME extends InputMethodService implements
                         mHandler.post(() -> {
                             Toast.makeText(this, error, Toast.LENGTH_LONG).show();
                             mKeyboardSwitcher.setVoiceListeningState(VoiceListeningState.OFF);
+                            updateVoiceDictationScreenOn(VoiceListeningState.OFF);
                         });
                         return kotlin.Unit.INSTANCE;
                     },
                     state -> {
                         mHandler.post(() -> {
                             mKeyboardSwitcher.setVoiceListeningState(state);
+                            updateVoiceDictationScreenOn(state);
                             if (state == VoiceListeningState.OFF) {
                                 mSonioxPartialPreview = null;
+                                clearSonioxPartialInInput();
                             }
                         });
                         return kotlin.Unit.INSTANCE;
@@ -1486,10 +1495,15 @@ public class LatinIME extends InputMethodService implements
     }
 
     private void onSonioxTextInput(final String token) {
-        showSonioxPartialPreview("");
+        if (mSettings.getCurrent().mSonioxPartialInInput) {
+            // commitText replaces the composing preview; do not finishComposing (that keeps the text).
+            mSonioxPartialInInputActive = false;
+        } else {
+            showSonioxPartialPreview("");
+        }
         String text = token;
         if (mSettings.getCurrent().mSonioxStripPunctuation) {
-            text = SttTextUtils.stripSttPunctuation(text);
+            text = stripSonioxPunctuation(text);
             if (text.isEmpty()) {
                 return;
             }
@@ -1499,7 +1513,16 @@ public class LatinIME extends InputMethodService implements
         onTextInput(text);
     }
 
+    private String stripSonioxPunctuation(final String text) {
+        return SttTextUtils.stripSttPunctuation(
+                text, mSettings.getCurrent().mSonioxStripPunctuationChars);
+    }
+
     private void showSonioxPartialPreview(final String partial) {
+        if (mSettings.getCurrent().mSonioxPartialInInput) {
+            showSonioxPartialInInput(partial);
+            return;
+        }
         if (partial == null || partial.isEmpty()) {
             mSonioxPartialPreview = null;
             if (!hasSuggestionStripView() || !onEvaluateInputViewShown()) {
@@ -1516,7 +1539,7 @@ public class LatinIME extends InputMethodService implements
         }
         String text = partial;
         if (mSettings.getCurrent().mSonioxStripPunctuation) {
-            text = SttTextUtils.stripSttPunctuation(text);
+            text = stripSonioxPunctuation(text);
             if (text.isEmpty()) {
                 showSonioxPartialPreview("");
                 return;
@@ -1524,6 +1547,51 @@ public class LatinIME extends InputMethodService implements
         }
         mSonioxPartialPreview = text;
         setSuggestedWords(SuggestedWords.newVoicePartial(text));
+    }
+
+    private void showSonioxPartialInInput(final String partial) {
+        if (partial == null || partial.isEmpty()) {
+            clearSonioxPartialInInput();
+            return;
+        }
+        String text = partial;
+        if (mSettings.getCurrent().mSonioxStripPunctuation) {
+            text = stripSonioxPunctuation(text);
+            if (text.isEmpty()) {
+                clearSonioxPartialInInput();
+                return;
+            }
+        }
+        final RichInputConnection connection = mInputLogic.mConnection;
+        connection.beginBatchEdit();
+        connection.setComposingText(SttTextUtils.asVoicePartialComposingText(text), 1);
+        connection.endBatchEdit();
+        mSonioxPartialInInputActive = true;
+    }
+
+    private void clearSonioxPartialInInput() {
+        if (!mSonioxPartialInInputActive) {
+            return;
+        }
+        final RichInputConnection connection = mInputLogic.mConnection;
+        connection.beginBatchEdit();
+        // Empty composing text discards the preview. finishComposingText() would keep it as normal text.
+        connection.setComposingText("", 1);
+        connection.endBatchEdit();
+        mSonioxPartialInInputActive = false;
+    }
+
+    /** Keep the display awake while Soniox dictation is active (CONNECTING or LISTENING). */
+    private void updateVoiceDictationScreenOn(final VoiceListeningState state) {
+        final Window window = getWindow().getWindow();
+        if (window == null) {
+            return;
+        }
+        if (state != VoiceListeningState.OFF) {
+            window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        } else {
+            window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        }
     }
 
     private void onVoiceListeningReady() {
@@ -1634,12 +1702,13 @@ public class LatinIME extends InputMethodService implements
 
     @Override
     public void setSuggestions(final SuggestedWords suggestedWords) {
-        if (isVoiceRecordingActive() && mSonioxPartialPreview != null && !mSonioxPartialPreview.isEmpty()
+        if (isVoiceRecordingActive() && !mSettings.getCurrent().mSonioxPartialInInput
+                && mSonioxPartialPreview != null && !mSonioxPartialPreview.isEmpty()
                 && suggestedWords.mInputStyle != SuggestedWords.INPUT_STYLE_VOICE_PARTIAL) {
             return;
         }
         if (suggestedWords.isEmpty()) {
-            if (isVoiceRecordingActive()) {
+            if (isVoiceRecordingActive() && !mSettings.getCurrent().mSonioxPartialInInput) {
                 if (hasSuggestionStripView()) {
                     mSuggestionStripView.setSuggestions(SuggestedWords.getEmptyInstance(),
                             mRichImm.getCurrentSubtype().isRtlSubtype());

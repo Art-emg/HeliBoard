@@ -68,6 +68,7 @@ class SonioxVoiceInputManager(
     private var audioRecord: AudioRecord? = null
     private var recordingJob: Job? = null
     private var graceJob: Job? = null
+    private var silenceTimeoutJob: Job? = null
 
     @Volatile private var sessionActive = false // socket open, results still wanted
     @Volatile private var capturing = false     // mic actively streaming
@@ -141,6 +142,7 @@ class SonioxVoiceInputManager(
     fun stop() {
         if (!sessionActive) return
         Log.i(TAG, "stop requested")
+        cancelSilenceTimeout()
         stopCapture()
         setState(VoiceListeningState.OFF) // hide UI immediately, results keep flowing
         try {
@@ -201,6 +203,7 @@ class SonioxVoiceInputManager(
             capturing = true
             record.startRecording()
             setState(VoiceListeningState.LISTENING)
+            startSilenceTimeout()
             Log.i(TAG, "capture started")
             recordingJob = scope.launch {
                 // Send in fixed ~100 ms chunks for steady pacing (avoids "input too slow").
@@ -253,9 +256,18 @@ class SonioxVoiceInputManager(
         }
         if (finalSb.isNotEmpty()) {
             val out = finalSb.toString()
-            scope.launch(Dispatchers.Main) { onFinalText(out) }
+            val partialOut = partialSb.toString()
+            scope.launch(Dispatchers.Main) {
+                onFinalText(out)
+                onPartialText(partialOut)
+            }
+            resetSilenceTimeout()
+        } else if (partialSb.isNotEmpty()) {
+            scope.launch(Dispatchers.Main) { onPartialText(partialSb.toString()) }
+            resetSilenceTimeout()
+        } else {
+            scope.launch(Dispatchers.Main) { onPartialText(partialSb.toString()) }
         }
-        scope.launch(Dispatchers.Main) { onPartialText(partialSb.toString()) }
         if (response.finished) {
             scope.launch(Dispatchers.Main) { finishCleanup() }
         }
@@ -285,6 +297,7 @@ class SonioxVoiceInputManager(
         if (!sessionActive && webSocket == null) return
         graceJob?.cancel()
         graceJob = null
+        cancelSilenceTimeout()
         stopCapture()
         sessionActive = false
         try { webSocket?.close(1000, null) } catch (_: Exception) { }
@@ -295,6 +308,7 @@ class SonioxVoiceInputManager(
 
     private fun forceReset() {
         graceJob?.cancel()
+        cancelSilenceTimeout()
         stopCapture()
         sessionActive = false
         try { webSocket?.cancel() } catch (_: Exception) { }
@@ -337,6 +351,33 @@ class SonioxVoiceInputManager(
         if (samples == 0) return 0f
         val rms = kotlin.math.sqrt(sumSquares / samples).toFloat() / 32768f
         return (rms * 5f).coerceIn(0f, 1f)
+    }
+
+    private fun readSilenceTimeoutSeconds(): Int =
+        context.prefs().getInt(Settings.PREF_SONIOX_SILENCE_TIMEOUT, Defaults.PREF_SONIOX_SILENCE_TIMEOUT)
+
+    /** Auto-stop mic after no new partial/final text for the configured interval. */
+    private fun startSilenceTimeout() {
+        cancelSilenceTimeout()
+        val timeoutSec = readSilenceTimeoutSeconds()
+        if (timeoutSec > Settings.SONIOX_SILENCE_TIMEOUT_MAX) return
+        silenceTimeoutJob = scope.launch {
+            delay(timeoutSec * 1000L)
+            if (sessionActive) {
+                Log.i(TAG, "silence timeout (${timeoutSec}s), stopping dictation")
+                stop()
+            }
+        }
+    }
+
+    private fun resetSilenceTimeout() {
+        if (!capturing) return
+        startSilenceTimeout()
+    }
+
+    private fun cancelSilenceTimeout() {
+        silenceTimeoutJob?.cancel()
+        silenceTimeoutJob = null
     }
 
     @Serializable

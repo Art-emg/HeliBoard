@@ -1,15 +1,41 @@
 // SPDX-License-Identifier: GPL-3.0-only
 package helium314.keyboard.latin.voice
 
+import android.text.SpannableString
+import android.text.Spanned
+import android.text.style.UnderlineSpan
+import helium314.keyboard.latin.settings.Defaults
+
 /** Post-processing for speech-to-text output. */
 object SttTextUtils {
     /**
-     * Removes punctuation from STT text. When punctuation is removed before an uppercase letter,
-     * that letter is lowercased so a new sentence does not start mid-flow.
+     * Parses the user setting: each non-whitespace character is stripped when rules allow.
      */
     @JvmStatic
-    fun stripSttPunctuation(text: String): String {
-        if (text.isEmpty()) return text
+    fun parseStripChars(spec: String?): Set<Char> =
+        spec?.filterNot { it.isWhitespace() }?.toSet() ?: emptySet()
+
+    /**
+     * Removes configured punctuation from STT text.
+     *
+     * A listed character is removed only when it is the last character in the chunk or is
+     * followed by whitespace. Characters embedded between letters or digits (e.g. `x.y`, `a.d.v`,
+     * `куда-нибудь` when `-` is not listed) are kept.
+     *
+     * When punctuation is removed before an uppercase letter, that letter is lowercased so a new
+     * sentence does not start mid-flow.
+     */
+    @JvmStatic
+    fun stripSttPunctuation(text: String): String =
+        stripSttPunctuation(text, parseStripChars(Defaults.PREF_SONIOX_STRIP_PUNCTUATION_CHARS))
+
+    @JvmStatic
+    fun stripSttPunctuation(text: String, charsToStripSpec: String?): String =
+        stripSttPunctuation(text, parseStripChars(charsToStripSpec))
+
+    @JvmStatic
+    fun stripSttPunctuation(text: String, charsToStrip: Set<Char>): String {
+        if (text.isEmpty() || charsToStrip.isEmpty()) return text
         val sb = StringBuilder(text.length)
         var i = 0
         while (i < text.length) {
@@ -31,19 +57,32 @@ object SttTextUtils {
                     if (sb.isNotEmpty() && sb.last() != ' ') sb.append(' ')
                     i++
                 }
-                else -> {
-                    i++
-                    var j = i
-                    while (j < text.length && text[j].isWhitespace()) j++
-                    if (j < text.length && text[j].isUpperCase() && sb.isNotEmpty()) {
-                        if (sb.last() != ' ') sb.append(' ')
-                        sb.append(text[j].lowercaseChar())
-                        i = j + 1
+                c in charsToStrip -> {
+                    val prev = text.getOrNull(i - 1)
+                    val next = text.getOrNull(i + 1)
+                    val embeddedInWord = prev?.isLetterOrDigit() == true && next?.isLetterOrDigit() == true
+                    val atEnd = i == text.length - 1
+                    val followedBySpace = next?.isWhitespace() == true
+                    if (!embeddedInWord && (atEnd || followedBySpace)) {
+                        i++
+                        var j = i
+                        while (j < text.length && text[j].isWhitespace()) j++
+                        if (j < text.length && text[j].isUpperCase() && sb.isNotEmpty()) {
+                            if (sb.last() != ' ') sb.append(' ')
+                            sb.append(text[j].lowercaseChar())
+                            i = j + 1
+                        }
+                    } else {
+                        sb.append(c)
+                        i++
                     }
+                }
+                else -> {
+                    sb.append(c)
+                    i++
                 }
             }
         }
-        // Keep leading spaces Soniox may send after sentence-ending punctuation.
         return sb.toString().trimEnd()
     }
 
@@ -63,5 +102,19 @@ object SttTextUtils {
             return " $incoming"
         }
         return incoming
+    }
+
+    /** Composing preview for live dictation in the editor (underlined until finalized). */
+    @JvmStatic
+    fun asVoicePartialComposingText(text: String): CharSequence {
+        if (text.isEmpty()) return text
+        val spannable = SpannableString(text)
+        spannable.setSpan(
+            UnderlineSpan(),
+            0,
+            text.length,
+            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE or Spanned.SPAN_COMPOSING,
+        )
+        return spannable
     }
 }

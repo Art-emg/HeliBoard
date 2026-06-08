@@ -130,6 +130,13 @@ public final class Settings implements SharedPreferences.OnSharedPreferenceChang
     public static final String PREF_SONIOX_LISTENING_SOUND = "soniox_listening_sound";
     public static final String PREF_SONIOX_LISTENING_VIBRATE = "soniox_listening_vibrate";
     public static final String PREF_SONIOX_STRIP_PUNCTUATION = "soniox_strip_punctuation";
+    public static final String PREF_SONIOX_STRIP_PUNCTUATION_CHARS = "soniox_strip_punctuation_chars";
+    public static final String PREF_SONIOX_PARTIAL_IN_INPUT = "soniox_partial_in_input";
+    public static final String PREF_SONIOX_SILENCE_TIMEOUT = "soniox_silence_timeout";
+    /** Stored in prefs; values above [SONIOX_SILENCE_TIMEOUT_MAX] mean no auto-stop. */
+    public static final int SONIOX_SILENCE_TIMEOUT_MIN = 5;
+    public static final int SONIOX_SILENCE_TIMEOUT_MAX = 120;
+    public static final int SONIOX_SILENCE_TIMEOUT_INFINITE = 121;
     public static final String VOICE_INPUT_PROVIDER_SYSTEM = "system";
     public static final String VOICE_INPUT_PROVIDER_SONIOX = "soniox";
     public static final String PREF_VOICE_KEY_PLACEMENT = "voice_key_placement";

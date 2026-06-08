@@ -25,7 +25,9 @@ import helium314.keyboard.settings.Setting
 import helium314.keyboard.latin.utils.Theme
 import helium314.keyboard.settings.initPreview
 import helium314.keyboard.settings.preferences.ListPreference
+import helium314.keyboard.settings.preferences.SliderPreference
 import helium314.keyboard.settings.preferences.SwitchPreference
+import helium314.keyboard.latin.voice.SttTextUtils
 import helium314.keyboard.settings.preferences.TextInputPreference
 import helium314.keyboard.latin.utils.previewDark
 
@@ -43,6 +45,9 @@ fun CustomExtensionsScreen(onClickBack: () -> Unit) {
             Settings.PREF_SONIOX_LISTENING_SOUND,
             Settings.PREF_SONIOX_LISTENING_VIBRATE,
             Settings.PREF_SONIOX_STRIP_PUNCTUATION,
+            Settings.PREF_SONIOX_STRIP_PUNCTUATION_CHARS,
+            Settings.PREF_SONIOX_PARTIAL_IN_INPUT,
+            Settings.PREF_SONIOX_SILENCE_TIMEOUT,
         ),
     )
 }
@@ -110,6 +115,32 @@ fun createCustomExtensionsSettings(context: Context) = listOf(
         SwitchPreference(it, Defaults.PREF_SONIOX_STRIP_PUNCTUATION) {
             KeyboardSwitcher.getInstance().mainKeyboardView?.refreshVoiceKeyVisuals()
         }
+    },
+    Setting(context, Settings.PREF_SONIOX_STRIP_PUNCTUATION_CHARS,
+        R.string.soniox_strip_punctuation_chars, R.string.soniox_strip_punctuation_chars_summary)
+    { setting ->
+        TextInputPreference(setting, Defaults.PREF_SONIOX_STRIP_PUNCTUATION_CHARS) { spec ->
+            spec.isNotBlank() && SttTextUtils.parseStripChars(spec).isNotEmpty()
+        }
+    },
+    Setting(context, Settings.PREF_SONIOX_PARTIAL_IN_INPUT,
+        R.string.soniox_partial_in_input, R.string.soniox_partial_in_input_summary)
+    {
+        SwitchPreference(it, Defaults.PREF_SONIOX_PARTIAL_IN_INPUT)
+    },
+    Setting(context, Settings.PREF_SONIOX_SILENCE_TIMEOUT,
+        R.string.soniox_silence_timeout, R.string.soniox_silence_timeout_summary) { setting ->
+        SliderPreference(
+            name = setting.title,
+            key = setting.key,
+            default = Defaults.PREF_SONIOX_SILENCE_TIMEOUT,
+            description = {
+                if (it > Settings.SONIOX_SILENCE_TIMEOUT_MAX) stringResource(R.string.settings_no_limit)
+                else stringResource(R.string.abbreviation_unit_seconds, it.toString())
+            },
+            range = Settings.SONIOX_SILENCE_TIMEOUT_MIN.toFloat()..Settings.SONIOX_SILENCE_TIMEOUT_INFINITE.toFloat(),
+            stepSize = 5,
+        )
     },
 )
 

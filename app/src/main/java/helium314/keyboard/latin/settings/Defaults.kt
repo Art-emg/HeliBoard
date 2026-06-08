@@ -116,6 +116,9 @@ object Defaults {
     const val PREF_SONIOX_LISTENING_SOUND = true
     const val PREF_SONIOX_LISTENING_VIBRATE = true
     const val PREF_SONIOX_STRIP_PUNCTUATION = false
+    const val PREF_SONIOX_STRIP_PUNCTUATION_CHARS = ".,!?"
+    const val PREF_SONIOX_PARTIAL_IN_INPUT = false
+    const val PREF_SONIOX_SILENCE_TIMEOUT = 15
     const val PREF_BIGRAM_PREDICTIONS = true
     const val PREF_SUGGEST_PUNCTUATION = false
     const val PREF_SUGGEST_CLIPBOARD_CONTENT = true

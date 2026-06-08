@@ -68,6 +68,10 @@ public class SettingsValues {
     public final boolean mSonioxListeningSound;
     public final boolean mSonioxListeningVibrate;
     public final boolean mSonioxStripPunctuation;
+    public final String mSonioxStripPunctuationChars;
+    public final boolean mSonioxPartialInInput;
+    /** Seconds of no new dictation text before mic stops; &gt; {@link Settings#SONIOX_SILENCE_TIMEOUT_MAX} = disabled. */
+    public final int mSonioxSilenceTimeout;
     public final boolean mLanguageSwitchKeyToOtherImes;
     public final boolean mLanguageSwitchKeyToOtherSubtypes;
     private final boolean mShowsLanguageSwitchKey;
@@ -207,6 +211,10 @@ public class SettingsValues {
         mSonioxListeningSound = prefs.getBoolean(Settings.PREF_SONIOX_LISTENING_SOUND, Defaults.PREF_SONIOX_LISTENING_SOUND);
         mSonioxListeningVibrate = prefs.getBoolean(Settings.PREF_SONIOX_LISTENING_VIBRATE, Defaults.PREF_SONIOX_LISTENING_VIBRATE);
         mSonioxStripPunctuation = prefs.getBoolean(Settings.PREF_SONIOX_STRIP_PUNCTUATION, Defaults.PREF_SONIOX_STRIP_PUNCTUATION);
+        mSonioxStripPunctuationChars = prefs.getString(
+                Settings.PREF_SONIOX_STRIP_PUNCTUATION_CHARS, Defaults.PREF_SONIOX_STRIP_PUNCTUATION_CHARS);
+        mSonioxPartialInInput = prefs.getBoolean(Settings.PREF_SONIOX_PARTIAL_IN_INPUT, Defaults.PREF_SONIOX_PARTIAL_IN_INPUT);
+        mSonioxSilenceTimeout = prefs.getInt(Settings.PREF_SONIOX_SILENCE_TIMEOUT, Defaults.PREF_SONIOX_SILENCE_TIMEOUT);
         String languagePref = prefs.getString(Settings.PREF_LANGUAGE_SWITCH_KEY, Defaults.PREF_LANGUAGE_SWITCH_KEY);
         mLanguageSwitchKeyToOtherImes = languagePref.equals("input_method") || languagePref.equals("both");
         mLanguageSwitchKeyToOtherSubtypes = mIsLocked || languagePref.equals("internal") || languagePref.equals("both");
