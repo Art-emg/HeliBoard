@@ -29,6 +29,7 @@ import okhttp3.Response
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 import okio.ByteString
+import java.util.ArrayDeque
 import java.util.concurrent.TimeUnit
 
 enum class VoiceListeningState {
@@ -41,10 +42,10 @@ enum class VoiceListeningState {
  * Streams microphone audio to the Soniox realtime STT WebSocket API and emits finalized text.
  *
  * Lifecycle:
- *  - [start] opens the socket, sends the JSON config, then immediately streams 16 kHz PCM.
+ *  - [start] opens the mic immediately (CONNECTING) and the WebSocket in parallel. Audio captured
+ *    while the socket is opening is buffered and flushed right after the config frame is sent.
  *  - Each server message may contain newly finalized tokens (is_final=true) plus a non-final
- *    preview tail. Only finalized tokens are committed, in arrival order, with no index based
- *    deduplication (that previously dropped the first words after an endpoint).
+ *    preview tail. Only finalized tokens are committed, in arrival order.
  *  - [stop] stops the mic, flushes via an empty frame, and keeps reading trailing finals until
  *    the server reports "finished" or a short grace timeout elapses.
  */
@@ -69,6 +70,12 @@ class SonioxVoiceInputManager(
     private var recordingJob: Job? = null
     private var graceJob: Job? = null
     private var silenceTimeoutJob: Job? = null
+
+    /** PCM chunks captured before the WebSocket is ready to receive audio. */
+    private val preConnectChunks = ArrayDeque<ByteArray>()
+    private var preConnectBufferedBytes = 0
+    private val preConnectLock = Any()
+    @Volatile private var streamTarget: WebSocket? = null
 
     @Volatile private var sessionActive = false // socket open, results still wanted
     @Volatile private var capturing = false     // mic actively streaming
@@ -100,8 +107,17 @@ class SonioxVoiceInputManager(
 
         sessionActive = true
         capturing = false
+        synchronized(preConnectLock) {
+            preConnectChunks.clear()
+            preConnectBufferedBytes = 0
+            streamTarget = null
+        }
         setState(VoiceListeningState.CONNECTING)
         Log.i(TAG, "start: model=$model")
+
+        if (!beginMicrophoneCapture()) {
+            return
+        }
 
         val config = buildConfigJson(apiKey, model)
         val request = Request.Builder().url(WEBSOCKET_URL).build()
@@ -109,13 +125,7 @@ class SonioxVoiceInputManager(
             override fun onOpen(ws: WebSocket, response: Response) {
                 if (!sessionActive) { ws.cancel(); return }
                 Log.i(TAG, "socket open, sending config")
-                if (!ws.send(config)) {
-                    fail("Failed to send Soniox config")
-                    return
-                }
-                // Order is preserved on the socket, so the config text frame is processed
-                // before any binary audio frame: safe to start capturing immediately.
-                startCapture(ws)
+                attachWebSocketStream(ws, config)
             }
 
             override fun onMessage(ws: WebSocket, text: String) {
@@ -176,14 +186,15 @@ class SonioxVoiceInputManager(
         ))
     }
 
-    private fun startCapture(ws: WebSocket) {
-        if (!sessionActive || capturing) return
+    /** Start mic capture immediately so speech during CONNECTING is not lost. */
+    private fun beginMicrophoneCapture(): Boolean {
+        if (!sessionActive || capturing) return false
         val minBuffer = AudioRecord.getMinBufferSize(
             SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT
         )
         if (minBuffer <= 0) {
             fail("Unable to initialize audio capture")
-            return
+            return false
         }
         try {
             @Suppress("MissingPermission")
@@ -197,37 +208,90 @@ class SonioxVoiceInputManager(
             if (record.state != AudioRecord.STATE_INITIALIZED) {
                 record.release()
                 fail("Microphone unavailable")
-                return
+                return false
             }
             audioRecord = record
             capturing = true
             record.startRecording()
-            setState(VoiceListeningState.LISTENING)
-            startSilenceTimeout()
-            Log.i(TAG, "capture started")
+            Log.i(TAG, "mic capture started (pre-connect buffer)")
             recordingJob = scope.launch {
-                // Send in fixed ~100 ms chunks for steady pacing (avoids "input too slow").
                 val chunk = ByteArray(CHUNK_BYTES)
                 while (isActive && capturing) {
                     val read = record.read(chunk, 0, chunk.size)
                     if (read > 0) {
-                        val level = computeAudioLevel(chunk, read)
+                        val data = chunk.copyOf(read)
+                        val level = computeAudioLevel(data, read)
                         scope.launch(Dispatchers.Main) { onAudioLevel(level) }
-                        try {
-                            ws.send(ByteString.of(*chunk.copyOf(read)))
-                        } catch (e: Exception) {
-                            Log.w(TAG, "audio send failed", e)
-                            break
-                        }
+                        enqueueOrSendAudio(data)
                     } else if (read < 0) {
                         Log.w(TAG, "AudioRecord.read error: $read")
                         break
                     }
                 }
             }
+            return true
         } catch (e: Exception) {
             Log.e(TAG, "capture failed", e)
             fail(e.message ?: "Audio capture failed")
+            return false
+        }
+    }
+
+    /** Send config, flush pre-connect audio, then stream live PCM on the open socket. */
+    private fun attachWebSocketStream(ws: WebSocket, config: String) {
+        if (!sessionActive || !capturing) {
+            ws.cancel()
+            return
+        }
+        if (!ws.send(config)) {
+            fail("Failed to send Soniox config")
+            return
+        }
+        val buffered = synchronized(preConnectLock) {
+            val chunks = preConnectChunks.toList()
+            preConnectChunks.clear()
+            preConnectBufferedBytes = 0
+            streamTarget = ws
+            chunks
+        }
+        Log.i(TAG, "flushing ${buffered.size} pre-connect chunk(s)")
+        for (chunk in buffered) {
+            try {
+                if (!ws.send(ByteString.of(*chunk))) {
+                    fail("Failed to send buffered audio")
+                    return
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "buffered audio send failed", e)
+                fail("Failed to send buffered audio")
+                return
+            }
+        }
+        setState(VoiceListeningState.LISTENING)
+        startSilenceTimeout()
+        Log.i(TAG, "live streaming started")
+    }
+
+    private fun enqueueOrSendAudio(data: ByteArray) {
+        synchronized(preConnectLock) {
+            val ws = streamTarget
+            if (ws != null) {
+                try {
+                    ws.send(ByteString.of(*data))
+                } catch (e: Exception) {
+                    Log.w(TAG, "audio send failed", e)
+                }
+            } else {
+                bufferPreConnectChunkLocked(data)
+            }
+        }
+    }
+
+    private fun bufferPreConnectChunkLocked(data: ByteArray) {
+        preConnectChunks.addLast(data)
+        preConnectBufferedBytes += data.size
+        while (preConnectBufferedBytes > MAX_PRECONNECT_BYTES && preConnectChunks.isNotEmpty()) {
+            preConnectBufferedBytes -= preConnectChunks.removeFirst().size
         }
     }
 
@@ -244,8 +308,6 @@ class SonioxVoiceInputManager(
             fail(it)
             return
         }
-        // Commit every newly finalized token. Soniox sends each final token exactly once,
-        // so concatenating finals across messages reconstructs the full transcript.
         val finalSb = StringBuilder()
         val partialSb = StringBuilder()
         for (token in response.tokens) {
@@ -278,7 +340,6 @@ class SonioxVoiceInputManager(
         if (raw.isEmpty()) return ""
         val trimmed = raw.trim()
         if (trimmed.startsWith("<") && trimmed.endsWith(">")) return ""
-        // Remove any embedded markers as a safety net, keep surrounding spacing.
         return CONTROL_TOKEN_REGEX.replace(raw, "")
     }
 
@@ -286,6 +347,11 @@ class SonioxVoiceInputManager(
         capturing = false
         recordingJob?.cancel()
         recordingJob = null
+        synchronized(preConnectLock) {
+            preConnectChunks.clear()
+            preConnectBufferedBytes = 0
+            streamTarget = null
+        }
         try {
             audioRecord?.stop()
             audioRecord?.release()
@@ -413,6 +479,8 @@ class SonioxVoiceInputManager(
         // 16000 Hz * 2 bytes * 0.1 s = 3200 bytes per ~100 ms
         private const val CHUNK_BYTES = 3200
         private const val FLUSH_GRACE_MS = 1500L
+        // ~10 s of PCM while waiting for the WebSocket (drop oldest if connect is very slow).
+        private const val MAX_PRECONNECT_BYTES = SAMPLE_RATE * 2 * 10
         private val CONTROL_TOKEN_REGEX = Regex("<[^>]*>")
     }
 }

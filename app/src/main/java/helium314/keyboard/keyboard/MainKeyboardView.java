@@ -716,9 +716,10 @@ public final class MainKeyboardView extends KeyboardView implements DrawingProxy
         invalidateKey(target);
     }
 
-    /** Audio-reactive pulse while listening (0..1). */
+    /** Audio-reactive pulse while connecting or listening (0..1). */
     public void updateVoiceAudioLevel(final float level) {
-        if (mVoiceListeningState != VoiceListeningState.LISTENING) return;
+        if (mVoiceListeningState != VoiceListeningState.LISTENING
+                && mVoiceListeningState != VoiceListeningState.CONNECTING) return;
         mVoiceAudioLevel = level;
         invalidateVoiceTargetKey();
     }
@@ -784,7 +785,7 @@ public final class MainKeyboardView extends KeyboardView implements DrawingProxy
         final int color;
         if (mVoiceListeningState == VoiceListeningState.CONNECTING) {
             color = VOICE_CONNECTING_COLOR;
-            alpha = 0.30f + 0.50f * mVoicePulseAlpha;
+            alpha = 0.30f + 0.50f * Math.max(mVoicePulseAlpha, mVoiceAudioLevel);
         } else {
             color = VOICE_LISTENING_COLOR;
             alpha = 0.25f + 0.60f * mVoiceAudioLevel;
